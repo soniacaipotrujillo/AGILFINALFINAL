@@ -170,3 +170,41 @@ FROM debts d
 LEFT JOIN banks b ON d.bank_id = b.id
 LEFT JOIN payment_history ph ON d.id = ph.debt_id
 GROUP BY d.id, b.logo_url;
+
+-- ----------------------------------------------------------------------------------------
+
+-- Copia y pega esto en tu consulta SQL de PostgreSQL --
+
+CREATE OR REPLACE FUNCTION get_debt_statistics(p_user_id INTEGER)
+RETURNS TABLE (
+    total_debts BIGINT,
+    total_amount DECIMAL(12, 2),
+    pending_count BIGINT,
+    pending_amount DECIMAL(12, 2),
+    overdue_count BIGINT,
+    overdue_amount DECIMAL(12, 2),
+    paid_count BIGINT,
+    paid_amount DECIMAL(12, 2)
+) AS $$ -- <--- Aquí empieza el bloque
+BEGIN
+    RETURN QUERY
+    SELECT 
+        COUNT(*)::BIGINT as total_debts,
+        COALESCE(SUM(amount), 0) as total_amount,
+        COUNT(*) FILTER (WHERE status = 'pending')::BIGINT as pending_count,
+        COALESCE(SUM(amount - paid_amount) FILTER (WHERE status = 'pending'), 0) as pending_amount,
+        COUNT(*) FILTER (WHERE status = 'overdue')::BIGINT as overdue_count,
+        COALESCE(SUM(amount - paid_amount) FILTER (WHERE status = 'overdue'), 0) as overdue_amount,
+        COUNT(*) FILTER (WHERE status = 'paid')::BIGINT as paid_count,
+        COALESCE(SUM(paid_amount) FILTER (WHERE status = 'paid'), 0) as paid_amount
+    FROM debts
+    WHERE user_id = p_user_id;
+END;
+$$ LANGUAGE plpgsql; -- <--- ¡IMPORTANTE! Asegúrate de copiar estos '$$' antes del LANGUAGE
+
+
+
+
+
+
+
