@@ -404,7 +404,7 @@
             background: white;
             border-radius: 20px;
             padding: 40px;
-            max-width: 500px;
+            max-width: 600px;
             width: 90%;
             max-height: 90vh;
             overflow-y: auto;
@@ -544,11 +544,11 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             z-index: 2000;
             max-width: 400px;
-            animation: slideIn 0.5s ease;
+            animation: slideInRight 0.5s ease;
             border-left: 5px solid #ef4444;
         }
 
-        @keyframes slideIn {
+        @keyframes slideInRight {
             from {
                 transform: translateX(100%);
                 opacity: 0;
@@ -680,6 +680,257 @@
             color: #666;
         }
 
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-container label {
+            color: #666;
+            cursor: pointer;
+        }
+
+        /* Estilos para el panel de notificaciones */
+        .notification-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .notification-item.unread {
+            background: #fff;
+            border-left-color: #ef4444;
+            box-shadow: 0 2px 10px rgba(239, 68, 68, 0.1);
+        }
+        
+        .notification-item:hover {
+            transform: translateX(-5px);
+            background: #f1f5f9;
+        }
+        
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        
+        .notification-title {
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .notification-time {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .notification-message {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .notification-type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+        
+        .type-overdue {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .type-upcoming {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        
+        .type-past_start {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+        
+        .mark-read-btn {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        .mark-read-btn:hover {
+            background: #e5e7eb;
+            color: #333;
+        }
+
+        .notification-sound {
+            display: none;
+        }
+        
+        .installment-payment {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .installment-payment label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .installment-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .installment-btn {
+            padding: 8px 15px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .installment-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .installment-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .installment-progress {
+            margin-top: 15px;
+            background: #e5e7eb;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .installment-progress-bar {
+            height: 100%;
+            background: #10b981;
+            transition: width 0.3s;
+        }
+        
+        .installment-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Animaciones */
+        @keyframes highlight {
+            0%, 100% {
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            }
+            50% {
+                box-shadow: 0 0 0 3px #ef4444, 0 10px 25px rgba(239, 68, 68, 0.3);
+                transform: scale(1.02);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.7;
+                transform: scale(1.2);
+            }
+        }
+
+        /* Notificaciones flotantes */
+        .notification-floating {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 9999;
+            animation: slideUp 0.5s ease;
+            border-left: 4px solid #667eea;
+            max-width: 300px;
+        }
+
+        .notification-floating .close-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        /* Indicador para deudas vencidas */
+        .debt-card.overdue-indicator::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 12px;
+            height: 12px;
+            background: #ef4444;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
         @media (max-width: 1024px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -687,6 +938,10 @@
             
             .debt-cards {
                 grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -706,10 +961,10 @@
             .payment-methods {
                 flex-direction: column;
             }
-        }
-
-        .notification-sound {
-            display: none;
+            
+            .modal-content {
+                padding: 20px;
+            }
         }
     </style>
 </head>
@@ -722,7 +977,7 @@
             ¡Deuda Vencida!
         </div>
         <div class="notification-message" id="notificationMessage"></div>
-        <button class="btn-primary" onclick="goToDebts()">Ver Deudas</button>
+        <button type="button" class="btn-primary" onclick="goToDebts()">Ver Deudas</button>
     </div>
 
     <!-- Modal de Pago -->
@@ -751,7 +1006,7 @@
     <div id="addDebtModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">Agregar Nueva Deuda</h3>
+                <h3 class="modal-title">Agregar Nuevo Préstamo</h3>
                 <div class="close-modal" onclick="closeModal()">×</div>
             </div>
             <form id="debtForm" onsubmit="saveDebt(event)">
@@ -770,34 +1025,102 @@
                         <option value="Otro">Otro</option>
                     </select>
                 </div>
-                
+
                 <div class="form-group">
-                    <label class="form-label">Descripción de la Deuda</label>
-                    <input type="text" class="form-input" id="debtDescription" required placeholder="Ej: Préstamo personal, Tarjeta de crédito, etc.">
+                    <label class="form-label">Descripción del Préstamo</label>
+                    <input type="text" class="form-input" id="debtDescription" required placeholder="Ej: Préstamo personal, Préstamo vehicular, etc.">
                 </div>
-                
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Importe Total (S/)</label>
+                        <input type="number" step="0.01" class="form-input" id="debtAmount" required placeholder="20000" oninput="calculateMonthlyPayment()">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Número de Cuotas</label>
+                        <input type="number" class="form-input" id="numberOfInstallments" min="1" max="360" value="12" required oninput="calculateMonthlyPayment()">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Tasa de Interés Anual (%)</label>
+                        <input type="number" step="0.01" class="form-input" id="interestRate" value="15" required oninput="calculateMonthlyPayment()">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Tipo de Interés</label>
+                        <select class="form-input" id="interestType" required oninput="calculateMonthlyPayment()">
+                            <option value="fijo">Fijo</option>
+                            <option value="variable">Variable</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="form-group">
-                    <label class="form-label">Monto Total</label>
-                    <input type="number" step="0.01" class="form-input" id="debtAmount" required placeholder="0.00">
+                    <label class="form-label">Fecha de Inicio</label>
+                    <input type="date" class="form-input" id="startDate" required oninput="calculateEndDate()">
                 </div>
-                
+
                 <div class="form-group">
-                    <label class="form-label">Fecha de Vencimiento</label>
-                    <input type="date" class="form-input" id="dueDate" required>
+                    <label class="form-label">Fecha de Finalización</label>
+                    <input type="date" class="form-input" id="endDate" readonly>
                 </div>
-                
+
+                <div class="form-group">
+                    <label class="form-label">Monto por Cuota (S/)</label>
+                    <input type="text" class="form-input" id="installmentAmount" readonly >
+                    <small >Se calculará automáticamente</small>
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Frecuencia de Pago</label>
-                    <select class="form-input" id="paymentFrequency" required>
+                    <select class="form-input" id="paymentFrequency" required oninput="calculateEndDate()">
                         <option value="mensual">Mensual</option>
                         <option value="quincenal">Quincenal</option>
                         <option value="semanal">Semanal</option>
-                        <option value="unico">Único</option>
                     </select>
                 </div>
-                
-                <button type="submit" class="btn-primary">Guardar Deuda</button>
+
+                <div class="form-group">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="allowPastDebts">
+                        <label for="allowPastDebts">Permitir agregar préstamos con fechas de inicio pasadas</label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary">Guardar Préstamo</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal de Notificaciones -->
+    <div id="notificationsModal" class="modal">
+        <div class="modal-content" >
+            <div class="modal-header">
+                <h3 class="modal-title">Notificaciones</h3>
+                <div class="close-modal" onclick="closeModal()">×</div>
+            </div>
+
+            <div class="filters" >
+                <button type="button" class="filter-btn active" onclick="filterNotifications('all')">Todas</button>
+                <button type="button" class="filter-btn" onclick="filterNotifications('overdue')">Vencidas</button>
+                <button type="button" class="filter-btn" onclick="filterNotifications('upcoming')">Próximas</button>
+                <button type="button" class="filter-btn" onclick="filterNotifications('past_start')">Sin Pagos</button>
+                <button type="button" class="filter-btn" onclick="markAllAsRead()" >
+                    <i class="fas fa-check-double"></i> Marcar todas
+                </button>
+            </div>
+
+            <div id="notificationsList" >
+                <!-- Notificaciones se cargarán aquí -->
+            </div>
+
+            <div id="noNotifications" class="hidden" >
+                <i class="fas fa-bell-slash" ></i>
+                <p>No hay notificaciones</p>
+            </div>
         </div>
     </div>
 
@@ -837,7 +1160,7 @@
                 </div>
                 <div class="nav-item" onclick="showAddDebtModal()">
                     <i class="fas fa-plus-circle"></i>
-                    <span>Agregar Deuda</span>
+                    <span>Agregar Préstamo</span>
                 </div>
                 <div class="nav-item" onclick="showBanks()">
                     <i class="fas fa-university"></i>
@@ -850,19 +1173,19 @@
                 <div class="section-title">
                     <span id="dashboardTitle">Resumen de Deudas</span>
                     <div class="month-selector">
-                        <button class="month-btn" onclick="previousMonth()"><i class="fas fa-chevron-left"></i></button>
+                        <button type="button" class="month-btn" onclick="previousMonth()"><i class="fas fa-chevron-left"></i></button>
                         <span class="current-month" id="currentMonth"></span>
-                        <button class="month-btn" onclick="nextMonth()"><i class="fas fa-chevron-right"></i></button>
+                        <button type="button" class="month-btn" onclick="nextMonth()"><i class="fas fa-chevron-right"></i></button>
                     </div>
                 </div>
 
                 <!-- Filtros -->
                 <div class="filters">
-                    <button class="filter-btn active" onclick="filterDebts('all')">Todas</button>
-                    <button class="filter-btn" onclick="filterDebts('pending')">Pendientes</button>
-                    <button class="filter-btn" onclick="filterDebts('overdue')">Vencidas</button>
-                    <button class="filter-btn" onclick="filterDebts('paid')">Pagadas</button>
-                    <button class="filter-btn" onclick="filterDebts('thisWeek')">Esta Semana</button>
+                    <button type="button" class="filter-btn active" onclick="filterDebts('all')">Todas</button>
+                    <button type="button" class="filter-btn" onclick="filterDebts('pending')">Pendientes</button>
+                    <button type="button" class="filter-btn" onclick="filterDebts('overdue')">Vencidas</button>
+                    <button type="button" class="filter-btn" onclick="filterDebts('paid')">Pagadas</button>
+                    <button type="button" class="filter-btn" onclick="filterDebts('thisWeek')">Esta Semana</button>
                 </div>
 
                 <!-- Estadísticas -->
@@ -942,6 +1265,7 @@
         let currentYear = new Date().getFullYear();
         let selectedBank = 'Todos';
         let notifications = [];
+        let selectedInstallmentCount = 1;
 
         // Datos de ejemplo
         const sampleDebts = [
@@ -951,11 +1275,20 @@
                 description: 'Préstamo Personal',
                 amount: 20000,
                 paidAmount: 6000,
+                interestRate: 15,
+                interestType: 'fijo',
+                numberOfInstallments: 12,
+                installmentAmount: 1666.67,
+                startDate: new Date(new Date().getFullYear(), new Date().getMonth() - 3, 15).toISOString().split('T')[0],
+                endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 9, 15).toISOString().split('T')[0],
                 dueDate: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1).toISOString().split('T')[0],
                 frequency: 'mensual',
                 status: 'pending',
                 createdDate: new Date().toISOString().split('T')[0],
-                paymentHistory: []
+                paymentHistory: [],
+                currentInstallment: 4,
+                totalInstallments: 12,
+                paidInstallments: 3
             },
             {
                 id: 2,
@@ -963,11 +1296,20 @@
                 description: 'Tarjeta de Crédito',
                 amount: 5000,
                 paidAmount: 2500,
+                interestRate: 18,
+                interestType: 'variable',
+                numberOfInstallments: 6,
+                installmentAmount: 833.33,
+                startDate: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 10).toISOString().split('T')[0],
+                endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 5, 10).toISOString().split('T')[0],
                 dueDate: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() - 2).toISOString().split('T')[0],
                 frequency: 'mensual',
                 status: 'overdue',
                 createdDate: new Date().toISOString().split('T')[0],
-                paymentHistory: []
+                paymentHistory: [],
+                currentInstallment: 2,
+                totalInstallments: 6,
+                paidInstallments: 1
             },
             {
                 id: 3,
@@ -975,11 +1317,20 @@
                 description: 'Préstamo Vehicular',
                 amount: 15000,
                 paidAmount: 15000,
+                interestRate: 12,
+                interestType: 'fijo',
+                numberOfInstallments: 24,
+                installmentAmount: 625.00,
+                startDate: new Date(new Date().getFullYear() - 1, 6, 1).toISOString().split('T')[0],
+                endDate: new Date(new Date().getFullYear(), 5, 1).toISOString().split('T')[0],
                 dueDate: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 15).toISOString().split('T')[0],
                 frequency: 'mensual',
                 status: 'paid',
                 createdDate: new Date().toISOString().split('T')[0],
-                paymentHistory: []
+                paymentHistory: [],
+                currentInstallment: 24,
+                totalInstallments: 24,
+                paidInstallments: 24
             },
             {
                 id: 4,
@@ -987,11 +1338,20 @@
                 description: 'Línea de Crédito',
                 amount: 8000,
                 paidAmount: 4000,
+                interestRate: 10,
+                interestType: 'fijo',
+                numberOfInstallments: 8,
+                installmentAmount: 1000.00,
+                startDate: new Date(new Date().getFullYear(), new Date().getMonth() - 2, 5).toISOString().split('T')[0],
+                endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 6, 5).toISOString().split('T')[0],
                 dueDate: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 5).toISOString().split('T')[0],
                 frequency: 'mensual',
                 status: 'pending',
                 createdDate: new Date().toISOString().split('T')[0],
-                paymentHistory: []
+                paymentHistory: [],
+                currentInstallment: 3,
+                totalInstallments: 8,
+                paidInstallments: 2
             }
         ];
 
@@ -1005,6 +1365,11 @@
                 debts.forEach(debt => {
                     debt.dueDate = new Date(debt.dueDate).toISOString().split('T')[0];
                     debt.createdDate = new Date(debt.createdDate).toISOString().split('T')[0];
+                    if (debt.startDate) debt.startDate = new Date(debt.startDate).toISOString().split('T')[0];
+                    if (debt.endDate) debt.endDate = new Date(debt.endDate).toISOString().split('T')[0];
+                    if (!debt.paidInstallments) {
+                        debt.paidInstallments = Math.floor(debt.paidAmount / debt.installmentAmount);
+                    }
                 });
             } else {
                 debts = sampleDebts;
@@ -1012,7 +1377,10 @@
             }
 
             // Cargar notificaciones
-            checkNotifications();
+            const savedNotifications = localStorage.getItem('notifications');
+            if (savedNotifications) {
+                notifications = JSON.parse(savedNotifications);
+            }
             
             // Actualizar UI
             updateMonthDisplay();
@@ -1020,9 +1388,17 @@
             renderDebts();
             updateNotificationCount();
             
-            // Configurar verificación automática de deudas vencidas
-            setInterval(checkDueDebts, 60000); // Verificar cada minuto
-            setInterval(checkNotifications, 300000); // Verificar notificaciones cada 5 minutos
+            // Configurar verificaciones automáticas
+            setInterval(checkDueDebts, 60000);
+            setInterval(checkPastDebts, 300000);
+            setInterval(checkUpcomingDebts, 3600000);
+            
+            // Ejecutar verificaciones iniciales
+            setTimeout(() => {
+                checkDueDebts();
+                checkPastDebts();
+                checkUpcomingDebts();
+            }, 1000);
         }
 
         // Guardar deudas en localStorage
@@ -1036,7 +1412,6 @@
             const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
             const currentMonthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-            // Filtrar deudas del mes actual y anteriores no pagadas
             const relevantDebts = debts.filter(debt => {
                 const debtDate = new Date(debt.dueDate);
                 return debtDate >= currentMonthStart || debt.status !== 'paid';
@@ -1051,7 +1426,6 @@
             const overdueCount = relevantDebts.filter(d => d.status === 'overdue').length;
             const paidCount = relevantDebts.filter(d => d.status === 'paid').length;
 
-            // Actualizar UI
             document.getElementById('totalDebt').textContent = `S/ ${total.toLocaleString('es-PE', {minimumFractionDigits: 2})}`;
             document.getElementById('pendingDebt').textContent = `S/ ${pending.toLocaleString('es-PE', {minimumFractionDigits: 2})}`;
             document.getElementById('overdueDebt').textContent = `S/ ${overdue.toLocaleString('es-PE', {minimumFractionDigits: 2})}`;
@@ -1062,9 +1436,55 @@
             document.getElementById('overdueCountStats').textContent = `${overdueCount} deudas`;
             document.getElementById('paidCount').textContent = `${paidCount} deudas`;
 
-            // Actualizar contadores en sidebar
             document.getElementById('thisMonthCount').textContent = pendingCount + overdueCount;
             document.getElementById('overdueCount').textContent = overdueCount;
+        }
+
+        // Calcular pago mensual
+        function calculateMonthlyPayment() {
+            const principal = parseFloat(document.getElementById('debtAmount').value) || 0;
+            const interestRate = parseFloat(document.getElementById('interestRate').value) || 0;
+            const numberOfInstallments = parseInt(document.getElementById('numberOfInstallments').value) || 1;
+            
+            if (principal > 0 && interestRate >= 0 && numberOfInstallments > 0) {
+                let installmentAmount;
+                
+                if (interestRate === 0) {
+                    installmentAmount = principal / numberOfInstallments;
+                } else {
+                    const monthlyRate = interestRate / 100 / 12;
+                    installmentAmount = principal * 
+                        (monthlyRate * Math.pow(1 + monthlyRate, numberOfInstallments)) / 
+                        (Math.pow(1 + monthlyRate, numberOfInstallments) - 1);
+                }
+                
+                document.getElementById('installmentAmount').value = 
+                    `S/ ${installmentAmount.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                
+                calculateEndDate();
+            }
+        }
+
+        // Calcular fecha de finalización
+        function calculateEndDate() {
+            const startDate = document.getElementById('startDate').value;
+            const numberOfInstallments = parseInt(document.getElementById('numberOfInstallments').value) || 1;
+            const frequency = document.getElementById('paymentFrequency').value;
+            
+            if (startDate && numberOfInstallments > 0) {
+                const start = new Date(startDate);
+                const end = new Date(start);
+                
+                if (frequency === 'mensual') {
+                    end.setMonth(start.getMonth() + numberOfInstallments);
+                } else if (frequency === 'quincenal') {
+                    end.setDate(start.getDate() + (numberOfInstallments * 15));
+                } else if (frequency === 'semanal') {
+                    end.setDate(start.getDate() + (numberOfInstallments * 7));
+                }
+                
+                document.getElementById('endDate').value = end.toISOString().split('T')[0];
+            }
         }
 
         // Renderizar deudas
@@ -1074,7 +1494,6 @@
             const weekFromNow = new Date(today);
             weekFromNow.setDate(today.getDate() + 7);
             
-            // Filtrar deudas según vista actual
             let filteredDebts = debts;
             
             if (currentView === 'thisMonth') {
@@ -1090,7 +1509,6 @@
                 filteredDebts = debts;
             }
             
-            // Aplicar filtro adicional
             if (filter === 'pending') {
                 filteredDebts = filteredDebts.filter(debt => debt.status === 'pending');
             } else if (filter === 'overdue') {
@@ -1104,7 +1522,6 @@
                 });
             }
             
-            // Filtrar por banco si está seleccionado
             if (selectedBank !== 'Todos') {
                 filteredDebts = filteredDebts.filter(debt => debt.bank === selectedBank);
             }
@@ -1124,8 +1541,8 @@
                 const dueDate = new Date(debt.dueDate);
                 const daysUntilDue = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
                 const remainingAmount = debt.amount - debt.paidAmount;
+                const progressPercentage = (debt.paidInstallments / debt.totalInstallments) * 100;
                 
-                // Determinar clase CSS según estado y fecha
                 let cardClass = 'debt-card';
                 let dueDateClass = 'due-date normal';
                 let statusText = 'Pendiente';
@@ -1156,6 +1573,7 @@
                                 <div class="debt-bank">
                                     <i class="fas fa-university"></i>
                                     ${debt.bank}
+                                    ${debt.interestRate ? `<span >${debt.interestRate}% ${debt.interestType}</span>` : ''}
                                 </div>
                             </div>
                             <div class="debt-amount">S/ ${remainingAmount.toLocaleString('es-PE', {minimumFractionDigits: 2})}</div>
@@ -1167,17 +1585,25 @@
                                 <span class="detail-value">S/ ${debt.amount.toLocaleString('es-PE', {minimumFractionDigits: 2})}</span>
                             </div>
                             <div class="detail-item">
-                                <span class="detail-label">Pagado</span>
-                                <span class="detail-value">S/ ${debt.paidAmount.toLocaleString('es-PE', {minimumFractionDigits: 2})}</span>
+                                <span class="detail-label">Cuota ${debt.frequency === 'mensual' ? 'Mensual' : debt.frequency === 'quincenal' ? 'Quincenal' : 'Semanal'}</span>
+                                <span class="detail-value">S/ ${(debt.installmentAmount || (debt.amount / (debt.numberOfInstallments || 12))).toLocaleString('es-PE', {minimumFractionDigits: 2})}</span>
                             </div>
                             <div class="detail-item">
-                                <span class="detail-label">Frecuencia</span>
-                                <span class="detail-value">${getFrequencyText(debt.frequency)}</span>
+                                <span class="detail-label">Cuotas Pagadas</span>
+                                <span class="detail-value">${debt.paidInstallments || 0}/${debt.totalInstallments || debt.numberOfInstallments || 12}</span>
                             </div>
                             <div class="detail-item">
-                                <span class="detail-label">Estado</span>
-                                <span class="detail-value">${statusText}</span>
+                                <span class="detail-label">Próxima Cuota</span>
+                                <span class="detail-value">${(debt.paidInstallments || 0) + 1}</span>
                             </div>
+                        </div>
+                        
+                        <div class="installment-progress">
+                            <div class="installment-progress-bar" ></div>
+                        </div>
+                        <div class="installment-info">
+                            <span>Progreso: ${debt.paidInstallments || 0} de ${debt.totalInstallments || debt.numberOfInstallments || 12} cuotas</span>
+                            <span>${progressPercentage.toFixed(1)}%</span>
                         </div>
                         
                         <div class="${dueDateClass}">
@@ -1188,13 +1614,13 @@
                         
                         ${debt.status !== 'paid' ? `
                             <div class="payment-methods">
-                                <button class="payment-btn credit" onclick="showPaymentModal(${debt.id}, 'tarjeta')">
+                                <button type="button" class="payment-btn credit" onclick="showPaymentModal(${debt.id}, 'tarjeta')">
                                     <i class="fas fa-credit-card"></i> Tarjeta
                                 </button>
-                                <button class="payment-btn debit" onclick="showPaymentModal(${debt.id}, 'transferencia')">
+                                <button type="button" class="payment-btn debit" onclick="showPaymentModal(${debt.id}, 'transferencia')">
                                     <i class="fas fa-exchange-alt"></i> Transferencia
                                 </button>
-                                <button class="payment-btn cash" onclick="showPaymentModal(${debt.id}, 'efectivo')">
+                                <button type="button" class="payment-btn cash" onclick="showPaymentModal(${debt.id}, 'efectivo')">
                                     <i class="fas fa-money-bill-wave"></i> Efectivo
                                 </button>
                             </div>
@@ -1210,6 +1636,18 @@
             if (!debt) return;
 
             const remainingAmount = debt.amount - debt.paidAmount;
+            const remainingInstallments = debt.totalInstallments - (debt.paidInstallments || 0);
+            const maxInstallmentsToPay = Math.min(remainingInstallments, 12);
+            
+            let installmentButtons = '';
+            for (let i = 1; i <= maxInstallmentsToPay; i++) {
+                installmentButtons += `
+                    <button type="button" class="installment-btn ${i === 1 ? 'active' : ''}" 
+                            onclick="selectInstallments(${i}, ${debt.installmentAmount})">
+                        ${i} ${i === 1 ? 'cuota' : 'cuotas'}
+                    </button>
+                `;
+            }
             
             document.getElementById('paymentForm').innerHTML = `
                 <div class="form-group">
@@ -1218,13 +1656,36 @@
                 </div>
                 
                 <div class="form-group">
+                    <label class="form-label">Cuotas Pagadas</label>
+                    <input type="text" class="form-input" value="${debt.paidInstallments || 0}/${debt.totalInstallments}" readonly>
+                </div>
+                
+                <div class="form-group">
                     <label class="form-label">Monto Pendiente</label>
                     <input type="text" class="form-input" value="S/ ${remainingAmount.toLocaleString('es-PE', {minimumFractionDigits: 2})}" readonly>
                 </div>
                 
+                <div class="installment-payment">
+                    <label>Seleccionar cuotas a pagar:</label>
+                    <div class="installment-buttons" id="installmentButtons">
+                        ${installmentButtons}
+                    </div>
+                    <div >
+                        <label class="form-label">Cuotas a pagar:</label>
+                        <input type="number" class="form-input" id="installmentsToPay" 
+                               min="1" max="${remainingInstallments}" value="1" 
+                               oninput="updateInstallmentAmount(${debt.installmentAmount})">
+                    </div>
+                </div>
+                
                 <div class="form-group">
-                    <label class="form-label">Monto a Pagar</label>
-                    <input type="number" step="0.01" class="form-input" id="paymentAmount" value="${remainingAmount}" max="${remainingAmount}" min="0.01" required>
+                    <label class="form-label">Monto de cada cuota</label>
+                    <input type="text" class="form-input" value="S/ ${debt.installmentAmount.toLocaleString('es-PE', {minimumFractionDigits: 2})}" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Total a pagar</label>
+                    <input type="text" class="form-input" id="totalPaymentAmount" value="S/ ${debt.installmentAmount.toLocaleString('es-PE', {minimumFractionDigits: 2})}" readonly>
                 </div>
                 
                 <div class="form-group">
@@ -1247,7 +1708,38 @@
                 </button>
             `;
 
+            selectedInstallmentCount = 1;
             document.getElementById('paymentModal').classList.add('active');
+        }
+
+        // Seleccionar número de cuotas
+        function selectInstallments(count, installmentAmount) {
+            selectedInstallmentCount = count;
+            document.getElementById('installmentsToPay').value = count;
+            
+            document.querySelectorAll('.installment-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            updateInstallmentAmount(installmentAmount);
+        }
+
+        // Actualizar monto total según cuotas seleccionadas
+        function updateInstallmentAmount(installmentAmount) {
+            const installmentsToPay = parseInt(document.getElementById('installmentsToPay').value) || 1;
+            selectedInstallmentCount = installmentsToPay;
+            
+            const totalAmount = installmentAmount * installmentsToPay;
+            document.getElementById('totalPaymentAmount').value = 
+                `S/ ${totalAmount.toLocaleString('es-PE', {minimumFractionDigits: 2})}`;
+            
+            document.querySelectorAll('.installment-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (parseInt(btn.textContent) === installmentsToPay) {
+                    btn.classList.add('active');
+                }
+            });
         }
 
         // Procesar pago
@@ -1255,7 +1747,8 @@
             const debt = debts.find(d => d.id === debtId);
             if (!debt) return;
 
-            const paymentAmount = parseFloat(document.getElementById('paymentAmount').value);
+            const installmentsToPay = parseInt(document.getElementById('installmentsToPay').value) || 1;
+            const paymentAmount = debt.installmentAmount * installmentsToPay;
             const paymentDate = document.getElementById('paymentDate').value;
             const reference = document.getElementById('paymentReference').value || '';
             
@@ -1270,40 +1763,48 @@
                 return;
             }
 
-            // Actualizar deuda
             debt.paidAmount += paymentAmount;
+            debt.paidInstallments = (debt.paidInstallments || 0) + installmentsToPay;
+            debt.currentInstallment = debt.paidInstallments + 1;
             
-            // Verificar si la deuda está completamente pagada
-            if (debt.paidAmount >= debt.amount) {
+            if (debt.paidAmount >= debt.amount || debt.paidInstallments >= debt.totalInstallments) {
                 debt.status = 'paid';
+                debt.currentInstallment = debt.totalInstallments;
+                debt.paidInstallments = debt.totalInstallments;
             } else if (debt.status === 'overdue') {
-                // Si está pagando una deuda vencida pero no completa, sigue vencida
                 debt.status = 'overdue';
             }
             
-            // Agregar al historial de pagos
-            debt.paymentHistory.push({
-                date: paymentDate,
-                amount: paymentAmount,
-                method: paymentMethod,
-                reference: reference
-            });
+            for (let i = 0; i < installmentsToPay; i++) {
+                debt.paymentHistory.push({
+                    date: paymentDate,
+                    amount: debt.installmentAmount,
+                    method: paymentMethod,
+                    reference: reference,
+                    installmentNumber: (debt.paidInstallments - installmentsToPay + i + 1)
+                });
+            }
 
             saveDebts();
             closeModal();
-            showPaymentConfirmation(debt, paymentAmount, paymentMethod);
+            showPaymentConfirmation(debt, paymentAmount, paymentMethod, installmentsToPay);
         }
 
         // Mostrar confirmación de pago
-        function showPaymentConfirmation(debt, amount, method) {
+        function showPaymentConfirmation(debt, amount, method, installmentsPaid) {
+            const remainingInstallments = debt.totalInstallments - debt.paidInstallments;
+            
             document.getElementById('confirmationContent').innerHTML = `
                 <div class="payment-success">
                     <i class="fas fa-check-circle"></i>
                     <h3>¡Pago Realizado con Éxito!</h3>
-                    <p>Has pagado S/ ${amount.toLocaleString('es-PE', {minimumFractionDigits: 2})} de tu deuda con ${debt.bank}</p>
+                    <p>Has pagado ${installmentsPaid} ${installmentsPaid === 1 ? 'cuota' : 'cuotas'} de tu deuda con ${debt.bank}</p>
+                    <p><strong>Monto pagado:</strong> S/ ${amount.toLocaleString('es-PE', {minimumFractionDigits: 2})}</p>
                     <p><strong>Método:</strong> ${getPaymentMethodText(method)}</p>
+                    <p><strong>Cuotas pagadas:</strong> ${debt.paidInstallments}/${debt.totalInstallments}</p>
+                    <p><strong>Cuotas pendientes:</strong> ${remainingInstallments}</p>
                     <p><strong>Saldo pendiente:</strong> S/ ${(debt.amount - debt.paidAmount).toLocaleString('es-PE', {minimumFractionDigits: 2})}</p>
-                    <button class="btn-primary" onclick="closeModal(); updateStats(); renderDebts();">
+                    <button type="button" class="btn-primary" onclick="closeModal(); updateStats(); renderDebts();">
                         <i class="fas fa-check"></i> Aceptar
                     </button>
                 </div>
@@ -1311,6 +1812,8 @@
 
             document.getElementById('confirmationModal').classList.add('active');
         }
+
+        // ==================== SISTEMA DE NOTIFICACIONES ====================
 
         // Verificar deudas vencidas
         function checkDueDebts() {
@@ -1323,7 +1826,6 @@
             overdueDebts.forEach(debt => {
                 debt.status = 'overdue';
                 
-                // Agregar notificación
                 addNotification({
                     type: 'overdue',
                     title: 'Deuda Vencida',
@@ -1341,6 +1843,74 @@
             }
         }
 
+        // Detectar deudas pasadas (startDate pasada pero sin pagos)
+        function checkPastDebts() {
+            const today = new Date().toISOString().split('T')[0];
+            const pastDebts = debts.filter(debt => {
+                if (debt.status === 'paid') return false;
+                if (debt.paidInstallments > 0) return false;
+                
+                const startDate = new Date(debt.startDate || debt.createdDate);
+                const todayDate = new Date();
+                
+                return startDate < todayDate && debt.paidAmount === 0;
+            });
+
+            pastDebts.forEach(debt => {
+                const existingNotification = notifications.find(n => 
+                    n.debtId === debt.id && n.type === 'past_start'
+                );
+                
+                if (!existingNotification) {
+                    addNotification({
+                        type: 'past_start',
+                        title: 'Deuda sin Pagos',
+                        message: `La deuda "${debt.description}" de ${debt.bank} comenzó el ${formatDate(debt.startDate)} y aún no tiene pagos registrados`,
+                        debtId: debt.id,
+                        timestamp: new Date().toISOString(),
+                        read: false
+                    });
+                }
+            });
+        }
+
+        // Detectar deudas próximas a vencer (7 días antes)
+        function checkUpcomingDebts() {
+            const today = new Date();
+            const sevenDaysFromNow = new Date(today);
+            sevenDaysFromNow.setDate(today.getDate() + 7);
+            
+            const upcomingDebts = debts.filter(debt => {
+                if (debt.status === 'paid') return false;
+                
+                const dueDate = new Date(debt.dueDate);
+                const isUpcoming = dueDate >= today && dueDate <= sevenDaysFromNow;
+                
+                return isUpcoming;
+            });
+
+            upcomingDebts.forEach(debt => {
+                const dueDate = new Date(debt.dueDate);
+                const daysUntilDue = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+                
+                const existingNotification = notifications.find(n => 
+                    n.debtId === debt.id && n.type === 'upcoming' && 
+                    new Date(n.timestamp).toDateString() === today.toDateString()
+                );
+                
+                if (!existingNotification) {
+                    addNotification({
+                        type: 'upcoming',
+                        title: 'Deuda Próxima a Vencer',
+                        message: `La deuda "${debt.description}" de ${debt.bank} vence en ${daysUntilDue} días (${formatDate(debt.dueDate)})`,
+                        debtId: debt.id,
+                        timestamp: new Date().toISOString(),
+                        read: false
+                    });
+                }
+            });
+        }
+
         // Mostrar notificación de deuda vencida
         function showOverdueNotification(debt) {
             const notification = document.getElementById('notificationModal');
@@ -1350,11 +1920,9 @@
             
             notification.classList.remove('hidden');
             
-            // Reproducir sonido de notificación
             const sound = document.getElementById('notificationSound');
             sound.play().catch(e => console.log('No se pudo reproducir el sonido:', e));
             
-            // Auto-ocultar después de 10 segundos
             setTimeout(() => {
                 notification.classList.add('hidden');
             }, 10000);
@@ -1362,29 +1930,319 @@
 
         // Agregar notificación
         function addNotification(notification) {
-            notifications.push(notification);
+            const newNotification = {
+                id: Date.now(),
+                ...notification,
+                read: false
+            };
+            
+            notifications.unshift(newNotification);
             localStorage.setItem('notifications', JSON.stringify(notifications));
             updateNotificationCount();
-        }
-
-        // Verificar notificaciones
-        function checkNotifications() {
-            const savedNotifications = localStorage.getItem('notifications');
-            if (savedNotifications) {
-                notifications = JSON.parse(savedNotifications);
+            
+            if (notifications.length > 100) {
+                notifications = notifications.slice(0, 100);
             }
-            updateNotificationCount();
         }
 
         // Actualizar contador de notificaciones
         function updateNotificationCount() {
-            const today = new Date().toISOString().split('T')[0];
-            const unreadNotifications = notifications.filter(n => {
-                const notificationDate = new Date(n.timestamp).toISOString().split('T')[0];
-                return notificationDate === today;
-            });
-            
+            const unreadNotifications = notifications.filter(n => !n.read);
             document.getElementById('notificationCount').textContent = unreadNotifications.length;
+            
+            if (unreadNotifications.length > 0) {
+                document.title = `(${unreadNotifications.length}) Gestor Inteligente de Deudas`;
+            } else {
+                document.title = 'Gestor Inteligente de Deudas';
+            }
+        }
+
+        // ==================== PANEL DE NOTIFICACIONES ====================
+
+        // Mostrar panel de notificaciones
+        function toggleNotifications() {
+            showNotificationsModal();
+        }
+
+        // Mostrar modal de notificaciones
+        function showNotificationsModal() {
+            renderNotificationsList();
+            document.getElementById('notificationsModal').classList.add('active');
+        }
+
+        // Renderizar lista de notificaciones
+        function renderNotificationsList(filter = 'all') {
+            const container = document.getElementById('notificationsList');
+            const noNotifications = document.getElementById('noNotifications');
+            
+            const sortedNotifications = [...notifications].sort((a, b) => 
+                new Date(b.timestamp) - new Date(a.timestamp)
+            );
+            
+            let filteredNotifications = sortedNotifications;
+            if (filter !== 'all') {
+                filteredNotifications = sortedNotifications.filter(n => n.type === filter);
+            }
+            
+            if (filteredNotifications.length === 0) {
+                container.innerHTML = '';
+                noNotifications.classList.remove('hidden');
+                return;
+            }
+            
+            noNotifications.classList.add('hidden');
+            
+            container.innerHTML = filteredNotifications.map(notification => {
+                const timeAgo = getTimeAgo(new Date(notification.timestamp));
+                const typeText = getNotificationTypeText(notification.type);
+                const typeClass = `type-${notification.type}`;
+                
+                return `
+                    <div class="notification-item ${notification.read ? '' : 'unread'}" 
+                         onclick="openDebtFromNotification(${notification.debtId}, ${notification.id})">
+                        <div class="notification-header">
+                            <div class="notification-title">
+                                <i class="${getNotificationIcon(notification.type)}"></i>
+                                ${notification.title}
+                                <span class="notification-type-badge ${typeClass}">${typeText}</span>
+                            </div>
+                            <div >
+                                <span class="notification-time">${timeAgo}</span>
+                                ${!notification.read ? `
+                                    <button type="button" class="mark-read-btn" onclick="markAsRead(${notification.id}); event.stopPropagation();">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <div class="notification-message">${notification.message}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Filtrar notificaciones
+        function filterNotifications(type) {
+            document.querySelectorAll('#notificationsModal .filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            renderNotificationsList(type);
+        }
+
+        // Marcar notificación como leída
+        function markAsRead(notificationId) {
+            const notificationIndex = notifications.findIndex(n => n.id === notificationId);
+            if (notificationIndex !== -1) {
+                notifications[notificationIndex].read = true;
+                localStorage.setItem('notifications', JSON.stringify(notifications));
+                updateNotificationCount();
+                renderNotificationsList();
+            }
+        }
+
+        // Marcar todas como leídas
+        function markAllAsRead() {
+            notifications.forEach(notification => {
+                notification.read = true;
+            });
+            localStorage.setItem('notifications', JSON.stringify(notifications));
+            updateNotificationCount();
+            renderNotificationsList();
+        }
+
+        // Abrir deuda desde notificación
+        function openDebtFromNotification(debtId, notificationId) {
+            const debt = debts.find(d => d.id === debtId);
+            if (debt) {
+                if (notificationId) {
+                    markAsRead(notificationId);
+                }
+                
+                closeModal();
+                
+                selectedBank = 'Todos';
+                currentView = 'all';
+                updateNav('all');
+                document.getElementById('dashboardTitle').textContent = 'Deuda Seleccionada';
+                document.getElementById('banksView').classList.add('hidden');
+                
+                const container = document.getElementById('debtList');
+                const debtElement = container.querySelector(`[data-debt-id="${debtId}"]`);
+                
+                if (debtElement) {
+                    debtElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    debtElement.style.animation = 'highlight 2s';
+                    setTimeout(() => {
+                        debtElement.style.animation = '';
+                    }, 2000);
+                } else {
+                    currentFilter = debt.status === 'overdue' ? 'overdue' : 'pending';
+                    renderDebts(currentFilter);
+                }
+            }
+        }
+
+        // ==================== FUNCIONES AUXILIARES ====================
+
+        function getNotificationTypeText(type) {
+            const types = {
+                'overdue': 'Vencida',
+                'upcoming': 'Próxima',
+                'past_start': 'Sin Pagos'
+            };
+            return types[type] || type;
+        }
+
+        function getNotificationIcon(type) {
+            const icons = {
+                'overdue': 'fas fa-exclamation-circle',
+                'upcoming': 'fas fa-calendar-alt',
+                'past_start': 'fas fa-clock'
+            };
+            return icons[type] || 'fas fa-bell';
+        }
+
+        function getTimeAgo(date) {
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 60) {
+                return `Hace ${diffMins} min${diffMins !== 1 ? 's' : ''}`;
+            } else if (diffHours < 24) {
+                return `Hace ${diffHours} hora${diffHours !== 1 ? 's' : ''}`;
+            } else if (diffDays < 7) {
+                return `Hace ${diffDays} día${diffDays !== 1 ? 's' : ''}`;
+            } else {
+                return date.toLocaleDateString('es-PE', {
+                    day: 'numeric',
+                    month: 'short'
+                });
+            }
+        }
+
+        function getFrequencyText(frequency) {
+            const frequencies = {
+                'mensual': 'Mensual',
+                'quincenal': 'Quincenal',
+                'semanal': 'Semanal',
+                'unico': 'Único'
+            };
+            return frequencies[frequency] || frequency;
+        }
+
+        function getPaymentMethodText(method) {
+            const methods = {
+                'tarjeta': 'Tarjeta de Crédito/Débito',
+                'transferencia': 'Transferencia Bancaria',
+                'efectivo': 'Efectivo'
+            };
+            return methods[method] || method;
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-PE', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            });
+        }
+
+        // ==================== FUNCIONES RESTANTES ====================
+
+        // Mostrar modal para agregar deuda
+        function showAddDebtModal() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('startDate').value = today;
+            document.getElementById('endDate').value = '';
+            document.getElementById('debtAmount').value = '';
+            document.getElementById('numberOfInstallments').value = '12';
+            document.getElementById('interestRate').value = '15';
+            document.getElementById('interestType').value = 'fijo';
+            document.getElementById('installmentAmount').value = '';
+            document.getElementById('allowPastDebts').checked = false;
+            document.getElementById('paymentFrequency').value = 'mensual';
+            
+            calculateMonthlyPayment();
+            
+            document.getElementById('addDebtModal').classList.add('active');
+        }
+
+        // Guardar nueva deuda
+        function saveDebt(event) {
+            event.preventDefault();
+            
+            const allowPastDebts = document.getElementById('allowPastDebts').checked;
+            const startDate = document.getElementById('startDate').value;
+            const today = new Date().toISOString().split('T')[0];
+            
+            if (!allowPastDebts && startDate < today) {
+                alert('No se permiten préstamos con fechas de inicio pasadas. Marque la opción "Permitir deudas pasadas" si desea continuar.');
+                return;
+            }
+            
+            const principal = parseFloat(document.getElementById('debtAmount').value);
+            const interestRate = parseFloat(document.getElementById('interestRate').value);
+            const numberOfInstallments = parseInt(document.getElementById('numberOfInstallments').value);
+            const frequency = document.getElementById('paymentFrequency').value;
+            
+            let installmentAmount;
+            if (interestRate === 0) {
+                installmentAmount = principal / numberOfInstallments;
+            } else {
+                const monthlyRate = interestRate / 100 / 12;
+                installmentAmount = principal * 
+                    (monthlyRate * Math.pow(1 + monthlyRate, numberOfInstallments)) / 
+                    (Math.pow(1 + monthlyRate, numberOfInstallments) - 1);
+            }
+            
+            const start = new Date(startDate);
+            let dueDate = new Date(start);
+            
+            if (frequency === 'mensual') {
+                dueDate.setMonth(start.getMonth() + numberOfInstallments);
+            } else if (frequency === 'quincenal') {
+                dueDate.setDate(start.getDate() + (numberOfInstallments * 15));
+            } else if (frequency === 'semanal') {
+                dueDate.setDate(start.getDate() + (numberOfInstallments * 7));
+            }
+            
+            const newDebt = {
+                id: Date.now(),
+                bank: document.getElementById('bankName').value,
+                description: document.getElementById('debtDescription').value,
+                amount: principal,
+                paidAmount: 0,
+                interestRate: interestRate,
+                interestType: document.getElementById('interestType').value,
+                numberOfInstallments: numberOfInstallments,
+                installmentAmount: parseFloat(installmentAmount.toFixed(2)),
+                startDate: startDate,
+                endDate: document.getElementById('endDate').value,
+                dueDate: dueDate.toISOString().split('T')[0],
+                frequency: frequency,
+                status: 'pending',
+                createdDate: new Date().toISOString().split('T')[0],
+                paymentHistory: [],
+                currentInstallment: 1,
+                totalInstallments: numberOfInstallments,
+                paidInstallments: 0
+            };
+            
+            debts.push(newDebt);
+            saveDebts();
+            closeModal();
+            updateStats();
+            renderDebts();
+            
+            alert('Préstamo agregado exitosamente');
         }
 
         // Funciones de navegación
@@ -1429,91 +2287,6 @@
             document.getElementById('banksView').classList.remove('hidden');
         }
 
-        // Filtrar deudas
-        function filterDebts(filter) {
-            currentFilter = filter;
-            
-            // Actualizar botones de filtro
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            renderDebts(filter);
-        }
-
-        // Filtrar por banco
-        function filterByBank(bank) {
-            selectedBank = bank;
-            currentView = 'all';
-            updateNav('all');
-            document.getElementById('dashboardTitle').textContent = `Deudas - ${bank}`;
-            document.getElementById('banksView').classList.add('hidden');
-            renderDebts();
-        }
-
-        // Mostrar modal para agregar deuda
-        function showAddDebtModal() {
-            document.getElementById('addDebtModal').classList.add('active');
-            // Establecer fecha mínima como hoy
-            document.getElementById('dueDate').min = new Date().toISOString().split('T')[0];
-        }
-
-        // Guardar nueva deuda
-        function saveDebt(event) {
-            event.preventDefault();
-            
-            const newDebt = {
-                id: Date.now(),
-                bank: document.getElementById('bankName').value,
-                description: document.getElementById('debtDescription').value,
-                amount: parseFloat(document.getElementById('debtAmount').value),
-                paidAmount: 0,
-                dueDate: document.getElementById('dueDate').value,
-                frequency: document.getElementById('paymentFrequency').value,
-                status: 'pending',
-                createdDate: new Date().toISOString().split('T')[0],
-                paymentHistory: []
-            };
-            
-            debts.push(newDebt);
-            saveDebts();
-            closeModal();
-            updateStats();
-            renderDebts();
-            
-            alert('Deuda agregada exitosamente');
-        }
-
-        // Funciones auxiliares
-        function getFrequencyText(frequency) {
-            const frequencies = {
-                'mensual': 'Mensual',
-                'quincenal': 'Quincenal',
-                'semanal': 'Semanal',
-                'unico': 'Único'
-            };
-            return frequencies[frequency] || frequency;
-        }
-
-        function getPaymentMethodText(method) {
-            const methods = {
-                'tarjeta': 'Tarjeta de Crédito/Débito',
-                'transferencia': 'Transferencia Bancaria',
-                'efectivo': 'Efectivo'
-            };
-            return methods[method] || method;
-        }
-
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('es-PE', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-            });
-        }
-
         function updateMonthDisplay() {
             const monthNames = [
                 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -1530,7 +2303,6 @@
                 currentYear--;
             }
             updateMonthDisplay();
-            // Aquí podrías filtrar deudas por mes
         }
 
         function nextMonth() {
@@ -1540,7 +2312,26 @@
                 currentYear++;
             }
             updateMonthDisplay();
-            // Aquí podrías filtrar deudas por mes
+        }
+
+        function filterDebts(filter) {
+            currentFilter = filter;
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            renderDebts(filter);
+        }
+
+        function filterByBank(bank) {
+            selectedBank = bank;
+            currentView = 'all';
+            updateNav('all');
+            document.getElementById('dashboardTitle').textContent = `Deudas - ${bank}`;
+            document.getElementById('banksView').classList.add('hidden');
+            renderDebts();
         }
 
         function updateNav(activeItem) {
@@ -1569,12 +2360,7 @@
             closeNotification();
         }
 
-        function toggleNotifications() {
-            // Aquí podrías implementar un dropdown de notificaciones
-            alert(`Tienes ${notifications.length} notificaciones`);
-        }
-
-        // Inicializar la aplicación cuando se carga la página
+        // Inicializar la aplicación
         document.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>

@@ -1,0 +1,34 @@
+# --- Dependencias (Lo más pesado) ---
+node_modules/
+/backend/node_modules/
+
+# --- Seguridad (Claves y contraseñas) ---
+.env
+.env.local
+.env.*
+
+# --- Archivos del Sistema Operativo (Basura) ---
+.DS_Store
+Thumbs.db
+
+# --- Logs de errores ---
+npm-debug.log*
+yarn-error.log*
+
+# --- IDEs (Configuraciones de tu editor) ---
+.vscode/
+.idea/
+
+# Dependencias
+node_modules/
+/backend/node_modules/
+
+# Configuración y Secretos
+.env
+.env.*
+
+# Logs y Sistema
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.vscode/

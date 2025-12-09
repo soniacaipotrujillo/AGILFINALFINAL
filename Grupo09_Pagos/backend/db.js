@@ -13,7 +13,6 @@ const pool = new Pool({
 });
 
 pool.on('error', (err) => {
-  // Prefer logging and exiting so the app restarts cleanly in dev/ops environments
   console.error('Error inesperado en el cliente de PostgreSQL', err);
   process.exit(-1);
 });
