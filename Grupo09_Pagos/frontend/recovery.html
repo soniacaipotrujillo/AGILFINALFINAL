@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperar - Gestor de Deudas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }
+        .auth-card { background: white; border-radius: 20px; padding: 40px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); text-align: center; }
+        .icon-container { width: 60px; height: 60px; background: #e0e7ff; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #667eea; font-size: 24px; }
+        h2 { color: #333; margin: 0 0 10px; font-size: 24px; }
+        p.subtitle { color: #666; font-size: 14px; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; color: #333; font-size: 14px; font-weight: 500; margin-bottom: 8px; }
+        input { width: 100%; padding: 12px 15px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 15px; box-sizing: border-box; color: #4a5568; }
+        input:focus { outline: none; border-color: #667eea; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; width: 100%; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        .back-link { display: block; margin-top: 20px; font-size: 14px; }
+        .back-link a { color: #667eea; text-decoration: none; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="auth-card">
+        <div class="icon-container">
+            <i class="fas fa-lock-open"></i>
+        </div>
+        <h2>Recuperar Contraseña</h2>
+        <p class="subtitle">Ingresa tu correo y te enviaremos instrucciones</p>
+
+        <form id="recoveryForm">
+            <div class="form-group">
+                <label>Correo Electrónico</label>
+                <input type="email" id="email" placeholder="ejemplo@correo.com" required>
+            </div>
+
+            <button type="submit" class="btn-primary">Enviar Instrucciones</button>
+        </form>
+
+        <div class="back-link">
+            <a href="login.html"><i class="fas fa-arrow-left"></i> Volver al inicio de sesión</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('recoveryForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            // Simulación visual solamente
+            const btn = e.target.querySelector('button');
+            const email = document.getElementById('email').value;
+            
+            btn.textContent = 'Enviando...';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                alert(`(Simulación) Se ha enviado un correo de recuperación a: ${email}\n\nNota: Esta funcionalidad requiere un servidor de correo real.`);
+                btn.textContent = 'Correo Enviado';
+                btn.style.background = '#10b981'; // Color verde de éxito
+            }, 1500);
+        });
+    </script>
+</body>
+</html>
