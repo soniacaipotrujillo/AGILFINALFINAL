@@ -93,6 +93,26 @@ class DebtAPI {
         });
         return await this.handleResponse(res);
     }
+
+    // Solicitar el código al correo
+    async requestResetCode(email) {
+        const response = await fetch(`${API_URL}/auth/forgot-password`, {
+            method: 'POST',
+            headers: this.getHeaders(false),
+            body: JSON.stringify({ email })
+        });
+        return await this.handleResponse(response);
+    }
+
+    // Enviar el código y la nueva contraseña
+    async confirmPasswordReset(email, code, newPassword) {
+        const response = await fetch(`${API_URL}/auth/reset-password`, {
+            method: 'POST',
+            headers: this.getHeaders(false),
+            body: JSON.stringify({ email, code, newPassword })
+        });
+        return await this.handleResponse(response);
+    }
 }
 
 // ESTA LÍNEA ES LA MÁS IMPORTANTE:

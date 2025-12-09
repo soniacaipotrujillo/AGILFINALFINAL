@@ -26,6 +26,14 @@ router.post('/', async (req, res) => {
     }
 
     const debt = debtRows[0];
+
+    const remaining = Number(debt.amount) - Number(debt.paid_amount);
+    if (Number(amount) > remaining) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: `El monto excede la deuda. Solo debes S/ ${remaining}` });
+    }
+
+
     const newPaid = Number(debt.paid_amount) + Number(amount);
     const status = newPaid >= Number(debt.amount) ? 'paid' : 'pending';
 
