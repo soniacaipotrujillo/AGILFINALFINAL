@@ -72,22 +72,22 @@
             position: fixed; 
             top: 0; left: 0; 
             width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.7) !important; /* Fondo negro semi-transparente */
+            background: rgba(0,0,0,0.7) !important; 
             z-index: 1000; 
             align-items: center; 
             justify-content: center; 
-            backdrop-filter: blur(3px); /* Efecto borroso */
+            backdrop-filter: blur(3px); 
         }
         .modal.active { display: flex !important; }
         
         .modal-content { 
-            background: #ffffff !important; /* Fondo BLANCO SÓLIDO */
-            opacity: 1 !important;          /* Opacidad total */
+            background: #ffffff !important; 
+            opacity: 1 !important;          
             border-radius: 20px; 
             padding: 40px; 
             width: 90%; 
             max-width: 500px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3); /* Sombra para resaltar */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             position: relative;
             z-index: 1001;
         }
@@ -208,6 +208,7 @@
                 </div>
                 <div class="nav-item" onclick="filterDebts('pending')">
                     <i class="fas fa-clock"></i> <span>Pendientes</span>
+                    <span class="status-badge status-pending" id="pendingCountBadge" style="margin-left:auto; background:#fef3c7; color:#d97706; padding:2px 8px; border-radius:10px; font-size:12px; display:none;">0</span>
                 </div>
                 <div class="nav-item" onclick="filterDebts('overdue')">
                     <i class="fas fa-exclamation-triangle"></i> <span>Vencidas</span>
@@ -294,10 +295,15 @@
                 document.getElementById('overdueCountStats').textContent = `${stats.overdue_count || 0} deudas`;
                 document.getElementById('paidCount').textContent = `${stats.paid_count || 0} deudas`;
                 
-                // Actualizar badge del sidebar
+                // Actualizar badge de VENCIDAS
                 const overdueBadge = document.getElementById('overdueCount');
                 overdueBadge.textContent = stats.overdue_count || 0;
                 overdueBadge.style.display = stats.overdue_count > 0 ? 'inline-block' : 'none';
+
+                // CAMBIO AQUÍ: Actualizar badge de PENDIENTES
+                const pendingBadge = document.getElementById('pendingCountBadge');
+                pendingBadge.textContent = stats.pending_count || 0;
+                pendingBadge.style.display = stats.pending_count > 0 ? 'inline-block' : 'none';
 
                 // 2. Cargar Deudas
                 const debtsData = await window.api.getAllDebts();
@@ -345,7 +351,7 @@
                     cardClass += ' paid';
                     dateClass = 'due-date paid';
                     statusText = 'Pagada';
-                } else if (d.urgency === 'overdue' || d.status === 'overdue') {
+                } else if (d.status === 'overdue' || d.urgency === 'overdue') {
                     cardClass += ' due-today'; // Rojo
                     dateClass = 'due-date due-today';
                     statusText = 'Vencida';
@@ -435,9 +441,9 @@
         }
 
         async function submitPayment() {
-            console.log("Iniciando proceso de pago..."); // Para ver en la consola (F12)
+            console.log("Iniciando proceso de pago..."); 
             
-            // CORRECCIÓN: Buscamos el botón de manera robusta
+            // Buscar botón robustamente
             const btn = document.querySelector('#paymentModal .payment-btn') || document.querySelector('#paymentModal button[type="button"]');
             
             if (!btn) {
@@ -458,7 +464,7 @@
                 const cardExp = document.getElementById('cardExp').value;
                 const cardCvv = document.getElementById('cardCvv').value;
 
-                // Validaciones en Frontend
+                // Validaciones
                 if(!amount || amount <= 0) {
                     alert("⚠️ Por favor ingresa un monto válido mayor a 0.");
                     return;
@@ -472,8 +478,8 @@
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
                 btn.disabled = true;
 
-                // 3. Enviar al Backend (Banco Ficticio)
-                console.log("Enviando datos al banco...", { debtId, amount, cardNum }); // Depuración
+                // 3. Enviar al Backend
+                console.log("Enviando datos al banco...", { debtId, amount, cardNum }); 
                 
                 const response = await window.api.createPayment({
                     debt_id: debtId,
@@ -489,19 +495,16 @@
                 closeModal();
                 await loadData(); // Recargar el dashboard
                 
-                // Mostrar recibo
                 alert(`✅ ¡PAGO APROBADO!\n\n💳 Tarjeta: **** ${cardNum.slice(-4)}\n💰 Monto: S/ ${amount}\n🆔 Operación: ${response.transaction_id}`);
 
             } catch(err) {
                 console.error("Error en pago:", err);
-                // Si el banco rechaza, mostramos el mensaje exacto
                 alert("❌ Error del Banco:\n" + err.message);
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
         }
-
 
         // --- Utilidades ---
 
@@ -510,18 +513,20 @@
         }
 
         function filterDebts(type) {
-            // Actualizar menú activo
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             event.currentTarget.classList.add('active');
             
-            // Filtrar array local
             if (type === 'all') {
                 renderDebts(allDebts);
-            } else {
-                const filtered = allDebts.filter(d => 
-                    d.status === type || d.urgency === type
-                );
+            } else if (type === 'pending') {
+                // Mostrar TODAS las que no sean 'paid' (incluye overdue y pending)
+                const filtered = allDebts.filter(d => d.status !== 'paid');
                 renderDebts(filtered);
+            } else if (type === 'overdue') {
+                const filtered = allDebts.filter(d => d.status === 'overdue' || d.urgency === 'overdue');
+                renderDebts(filtered);
+            } else {
+                renderDebts(allDebts);
             }
         }
 

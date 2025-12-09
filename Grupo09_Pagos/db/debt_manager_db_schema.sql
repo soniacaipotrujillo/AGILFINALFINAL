@@ -1,16 +1,10 @@
--- ==========================================================
--- SCRIPT COMPLETO: GESTOR DE DEUDAS (Debt Manager)
--- ==========================================================
-
--- 1. LIMPIEZA INICIAL (Reiniciar esquema)
+-- 1. REINICIO TOTAL (Borra todo para empezar limpio)
 DROP SCHEMA public CASCADE;
 CREATE SCHEMA public;
 GRANT ALL ON SCHEMA public TO postgres;
 GRANT ALL ON SCHEMA public TO public;
 
--- 2. CREACIÓN DE TABLAS
-
--- Tabla de usuarios
+-- 2. TABLAS
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -21,7 +15,6 @@ CREATE TABLE users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabla de bancos/instituciones financieras
 CREATE TABLE banks (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -31,7 +24,6 @@ CREATE TABLE banks (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabla de deudas
 CREATE TABLE debts (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -49,7 +41,6 @@ CREATE TABLE debts (
     CONSTRAINT check_paid_amount CHECK (paid_amount <= amount)
 );
 
--- Tabla de historial de pagos
 CREATE TABLE payment_history (
     id SERIAL PRIMARY KEY,
     debt_id INTEGER NOT NULL REFERENCES debts(id) ON DELETE CASCADE,
@@ -61,7 +52,6 @@ CREATE TABLE payment_history (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabla de notificaciones
 CREATE TABLE notifications (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -73,17 +63,7 @@ CREATE TABLE notifications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Índices para optimizar consultas
-CREATE INDEX idx_debts_user_id ON debts(user_id);
-CREATE INDEX idx_debts_status ON debts(status);
-CREATE INDEX idx_debts_due_date ON debts(due_date);
-CREATE INDEX idx_payment_history_debt_id ON payment_history(debt_id);
-CREATE INDEX idx_notifications_user_id ON notifications(user_id);
-CREATE INDEX idx_notifications_is_read ON notifications(is_read);
-
--- 3. FUNCIONES Y TRIGGERS (Lógica Automática)
-
--- Función: Actualizar fecha de modificación (updated_at)
+-- 3. FUNCIONES (La parte que faltaba)
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -92,13 +72,9 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_debts_updated_at BEFORE UPDATE ON debts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_debts_updated_at BEFORE UPDATE ON debts
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
--- Función: Detectar vencimiento automático al guardar
 CREATE OR REPLACE FUNCTION check_overdue_debts()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -109,10 +85,47 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER trigger_check_overdue BEFORE INSERT OR UPDATE ON debts
-    FOR EACH ROW EXECUTE FUNCTION check_overdue_debts();
+CREATE TRIGGER trigger_check_overdue BEFORE INSERT OR UPDATE ON debts FOR EACH ROW EXECUTE FUNCTION check_overdue_debts();
 
--- Función: Calcular estadísticas para el Dashboard (IMPORTANTE)
+-- Función de Estadísticas (Crucial para el Dashboard)
+CREATE OR REPLACE FUNCTION get_debt_statistics(p_user_id INTEGER)
+RETURNS TABLE (
+    total_debts BIGINT,
+    total_amount DECIMAL(12, 2),
+    pending_count BIGINT,
+    pending_amount DECIMAL(12, 2),
+    overdue_count BIGINT,
+    overdue_amount DECIMAL(12, 2),
+    paid_count BIGINT,
+    paid_amount DECIMAL(12, 2)
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        COUNT(*)::BIGINT,
+        COALESCE(SUM(amount), 0),
+        COUNT(*) FILTER (WHERE status = 'pending')::BIGINT,
+        COALESCE(SUM(amount - paid_amount) FILTER (WHERE status = 'pending'), 0),
+        COUNT(*) FILTER (WHERE status = 'overdue')::BIGINT,
+        COALESCE(SUM(amount - paid_amount) FILTER (WHERE status = 'overdue'), 0),
+        COUNT(*) FILTER (WHERE status = 'paid')::BIGINT,
+        COALESCE(SUM(paid_amount) FILTER (WHERE status = 'paid'), 0)
+    FROM debts
+    WHERE user_id = p_user_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 4. DATOS INICIALES
+INSERT INTO banks (name, code) VALUES 
+    ('BCP', 'BCP'), ('BBVA', 'BBVA'), ('Interbank', 'INTERBANK'),
+    ('Scotiabank', 'SCOTIABANK'), ('Banco de la Nación', 'BN'),
+    ('Banco Pichincha', 'PICHINCHA'), ('Banco Falabella', 'FALABELLA'),
+    ('MiBanco', 'MIBANCO'), ('Otro', 'OTHER');
+
+
+
+
+-- Función para calcular los totales del Dashboard
 CREATE OR REPLACE FUNCTION get_debt_statistics(p_user_id INTEGER)
 RETURNS TABLE (
     total_debts BIGINT,
@@ -139,47 +152,3 @@ BEGIN
     WHERE user_id = p_user_id;
 END;
 $$ LANGUAGE plpgsql;
-
--- 4. DATOS INICIALES Y VISTAS
-
--- Bancos peruanos por defecto
-INSERT INTO banks (name, code) VALUES 
-    ('BCP', 'BCP'),
-    ('BBVA', 'BBVA'),
-    ('Interbank', 'INTERBANK'),
-    ('Scotiabank', 'SCOTIABANK'),
-    ('Banco de la Nación', 'BN'),
-    ('Banco Pichincha', 'PICHINCHA'),
-    ('Banco Falabella', 'FALABELLA'),
-    ('MiBanco', 'MIBANCO'),
-    ('Otro', 'OTHER');
-
--- Vista detallada para consultas rápidas
-CREATE VIEW debts_detailed AS
-SELECT 
-    d.id,
-    d.user_id,
-    d.bank_name,
-    b.logo_url as bank_logo,
-    d.description,
-    d.amount,
-    d.paid_amount,
-    (d.amount - d.paid_amount) as remaining_amount,
-    d.due_date,
-    d.frequency,
-    d.status,
-    d.created_date,
-    CASE 
-        WHEN d.due_date < CURRENT_DATE AND d.status != 'paid' THEN 'overdue'
-        WHEN d.due_date = CURRENT_DATE AND d.status != 'paid' THEN 'due_today'
-        WHEN d.due_date <= CURRENT_DATE + INTERVAL '7 days' AND d.status != 'paid' THEN 'due_soon'
-        ELSE 'normal'
-    END as urgency,
-    (d.due_date - CURRENT_DATE) as days_until_due,
-    COUNT(ph.id) as payment_count,
-    d.created_at,
-    d.updated_at
-FROM debts d
-LEFT JOIN banks b ON d.bank_id = b.id
-LEFT JOIN payment_history ph ON d.id = ph.debt_id
-GROUP BY d.id, b.logo_url;
