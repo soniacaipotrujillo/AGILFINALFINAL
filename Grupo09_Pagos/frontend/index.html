@@ -66,13 +66,35 @@
         .payment-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: 500; cursor: pointer; color: white; transition: transform 0.2s; }
         .payment-btn.credit { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
         
-        /* MODALS */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
-        .modal.active { display: flex; }
-        .modal-content { background: white; border-radius: 20px; padding: 40px; width: 90%; max-width: 500px; }
+        /* MODALS CORREGIDOS */
+        .modal { 
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.7) !important; /* Fondo negro semi-transparente */
+            z-index: 1000; 
+            align-items: center; 
+            justify-content: center; 
+            backdrop-filter: blur(3px); /* Efecto borroso */
+        }
+        .modal.active { display: flex !important; }
+        
+        .modal-content { 
+            background: #ffffff !important; /* Fondo BLANCO SÓLIDO */
+            opacity: 1 !important;          /* Opacidad total */
+            border-radius: 20px; 
+            padding: 40px; 
+            width: 90%; 
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); /* Sombra para resaltar */
+            position: relative;
+            z-index: 1001;
+        }
+
         .form-group { margin-bottom: 20px; }
         .form-label { display: block; margin-bottom: 8px; color: #555; font-weight: 500; }
-        .form-input { width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 10px; }
+        .form-input { width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 10px; background: white; }
         .hidden { display: none !important; }
         
         @media (max-width: 1024px) { .main-content { grid-template-columns: 1fr; } }
@@ -95,19 +117,34 @@
                     <label class="form-label">Fecha de Pago</label>
                     <input type="date" class="form-input" id="payDate" required>
                 </div>
+
+                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+                <h4 style="margin-bottom: 15px; color: #333;">Datos de la Tarjeta</h4>
+                
                 <div class="form-group">
-                    <label class="form-label">Método</label>
-                    <select class="form-input" id="payMethod">
-                        <option value="tarjeta">Tarjeta</option>
-                        <option value="transferencia">Transferencia</option>
-                        <option value="efectivo">Efectivo</option>
-                    </select>
+                    <label class="form-label">Número de Tarjeta</label>
+                    <input type="text" class="form-input" id="cardNumber" placeholder="4000 1234 5678 9010" maxlength="19">
                 </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label class="form-label">Vencimiento (MM/YY)</label>
+                        <input type="month" class="form-input" id="cardExp">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">CVV</label>
+                        <input type="password" class="form-input" id="cardCvv" placeholder="123" maxlength="3">
+                    </div>
+                </div>
+
                 <div class="form-group">
-                    <label class="form-label">N° Operación (Opcional)</label>
-                    <input type="text" class="form-input" id="payReference">
+                    <label class="form-label" style="font-size: 12px; color: #666;">
+                        <i class="fas fa-lock"></i> Pagos procesados de forma segura por MockBank Inc.
+                    </label>
                 </div>
-                <button class="payment-btn credit" onclick="submitPayment()">Confirmar Pago</button>
+
+                <button class="payment-btn credit" onclick="submitPayment()">
+                    <i class="fas fa-credit-card"></i> Pagar Ahora
+                </button>
             </form>
         </div>
     </div>
@@ -398,25 +435,73 @@
         }
 
         async function submitPayment() {
-            try {
-                const amount = document.getElementById('payAmount').value;
-                if(!amount || amount <= 0) return alert("Monto inválido");
+            console.log("Iniciando proceso de pago..."); // Para ver en la consola (F12)
+            
+            // CORRECCIÓN: Buscamos el botón de manera robusta
+            const btn = document.querySelector('#paymentModal .payment-btn') || document.querySelector('#paymentModal button[type="button"]');
+            
+            if (!btn) {
+                alert("Error: No se encontró el botón de pago en el código.");
+                return;
+            }
 
-                await window.api.createPayment({
-                    debt_id: document.getElementById('payDebtId').value,
-                    amount: amount,
-                    payment_date: document.getElementById('payDate').value,
-                    payment_method: document.getElementById('payMethod').value,
-                    reference: document.getElementById('payReference').value
-                });
+            const originalText = btn.innerHTML;
+
+            try {
+                // 1. Recoger datos
+                const debtId = document.getElementById('payDebtId').value;
+                const amount = document.getElementById('payAmount').value;
+                const date = document.getElementById('payDate').value;
                 
+                // Datos de tarjeta
+                const cardNum = document.getElementById('cardNumber').value;
+                const cardExp = document.getElementById('cardExp').value;
+                const cardCvv = document.getElementById('cardCvv').value;
+
+                // Validaciones en Frontend
+                if(!amount || amount <= 0) {
+                    alert("⚠️ Por favor ingresa un monto válido mayor a 0.");
+                    return;
+                }
+                if(!cardNum || !cardExp || !cardCvv) {
+                    alert("⚠️ Faltan datos de la tarjeta. Llénalos todos.");
+                    return;
+                }
+
+                // 2. Feedback visual
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+                btn.disabled = true;
+
+                // 3. Enviar al Backend (Banco Ficticio)
+                console.log("Enviando datos al banco...", { debtId, amount, cardNum }); // Depuración
+                
+                const response = await window.api.createPayment({
+                    debt_id: debtId,
+                    amount: amount,
+                    payment_date: date,
+                    cardNumber: cardNum,
+                    cardExp: cardExp,
+                    cardCvv: cardCvv
+                });
+
+                // 4. Éxito
+                console.log("Respuesta del banco:", response);
                 closeModal();
-                await loadData();
-                alert("Pago registrado con éxito");
+                await loadData(); // Recargar el dashboard
+                
+                // Mostrar recibo
+                alert(`✅ ¡PAGO APROBADO!\n\n💳 Tarjeta: **** ${cardNum.slice(-4)}\n💰 Monto: S/ ${amount}\n🆔 Operación: ${response.transaction_id}`);
+
             } catch(err) {
-                alert("Error al pagar: " + err.message);
+                console.error("Error en pago:", err);
+                // Si el banco rechaza, mostramos el mensaje exacto
+                alert("❌ Error del Banco:\n" + err.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
         }
+
 
         // --- Utilidades ---
 
