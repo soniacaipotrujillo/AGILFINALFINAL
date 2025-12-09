@@ -1,7 +1,10 @@
--- Base de datos: debt_manager
--- Sistema de gestión de deudas
+-- 1. Limpieza total (Borrar todo lo anterior para evitar conflictos) --
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;
+GRANT ALL ON SCHEMA public TO postgres;
+GRANT ALL ON SCHEMA public TO public;
 
--- Tabla de usuarios
+-- 2. Creación de Tablas --
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -12,7 +15,6 @@ CREATE TABLE users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabla de bancos/instituciones financieras
 CREATE TABLE banks (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -22,7 +24,6 @@ CREATE TABLE banks (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabla de deudas
 CREATE TABLE debts (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -40,7 +41,6 @@ CREATE TABLE debts (
     CONSTRAINT check_paid_amount CHECK (paid_amount <= amount)
 );
 
--- Tabla de historial de pagos
 CREATE TABLE payment_history (
     id SERIAL PRIMARY KEY,
     debt_id INTEGER NOT NULL REFERENCES debts(id) ON DELETE CASCADE,
@@ -52,7 +52,6 @@ CREATE TABLE payment_history (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabla de notificaciones
 CREATE TABLE notifications (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -64,15 +63,9 @@ CREATE TABLE notifications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Índices para optimizar consultas
-CREATE INDEX idx_debts_user_id ON debts(user_id);
-CREATE INDEX idx_debts_status ON debts(status);
-CREATE INDEX idx_debts_due_date ON debts(due_date);
-CREATE INDEX idx_payment_history_debt_id ON payment_history(debt_id);
-CREATE INDEX idx_notifications_user_id ON notifications(user_id);
-CREATE INDEX idx_notifications_is_read ON notifications(is_read);
+-- 3. Funciones y Triggers (La parte que faltaba) --
 
--- Trigger para actualizar updated_at automáticamente
+-- Función: Actualizar fecha de modificación
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -81,13 +74,10 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_debts_updated_at BEFORE UPDATE ON debts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_debts_updated_at BEFORE UPDATE ON debts
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
--- Trigger para actualizar el estado de deudas vencidas automáticamente
+-- Función: Detectar vencimiento automático
 CREATE OR REPLACE FUNCTION check_overdue_debts()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -98,10 +88,9 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER trigger_check_overdue BEFORE INSERT OR UPDATE ON debts
-    FOR EACH ROW EXECUTE FUNCTION check_overdue_debts();
+CREATE TRIGGER trigger_check_overdue BEFORE INSERT OR UPDATE ON debts FOR EACH ROW EXECUTE FUNCTION check_overdue_debts();
 
--- Función para obtener estadísticas de deudas por usuario
+-- Función: Calcular estadísticas para el Dashboard
 CREATE OR REPLACE FUNCTION get_debt_statistics(p_user_id INTEGER)
 RETURNS TABLE (
     total_debts BIGINT,
@@ -116,95 +105,22 @@ RETURNS TABLE (
 BEGIN
     RETURN QUERY
     SELECT 
-        COUNT(*)::BIGINT as total_debts,
-        COALESCE(SUM(amount), 0) as total_amount,
-        COUNT(*) FILTER (WHERE status = 'pending')::BIGINT as pending_count,
-        COALESCE(SUM(amount - paid_amount) FILTER (WHERE status = 'pending'), 0) as pending_amount,
-        COUNT(*) FILTER (WHERE status = 'overdue')::BIGINT as overdue_count,
-        COALESCE(SUM(amount - paid_amount) FILTER (WHERE status = 'overdue'), 0) as overdue_amount,
-        COUNT(*) FILTER (WHERE status = 'paid')::BIGINT as paid_count,
-        COALESCE(SUM(paid_amount) FILTER (WHERE status = 'paid'), 0) as paid_amount
+        COUNT(*)::BIGINT,
+        COALESCE(SUM(amount), 0),
+        COUNT(*) FILTER (WHERE status = 'pending')::BIGINT,
+        COALESCE(SUM(amount - paid_amount) FILTER (WHERE status = 'pending'), 0),
+        COUNT(*) FILTER (WHERE status = 'overdue')::BIGINT,
+        COALESCE(SUM(amount - paid_amount) FILTER (WHERE status = 'overdue'), 0),
+        COUNT(*) FILTER (WHERE status = 'paid')::BIGINT,
+        COALESCE(SUM(paid_amount) FILTER (WHERE status = 'paid'), 0)
     FROM debts
     WHERE user_id = p_user_id;
 END;
 $$ LANGUAGE plpgsql;
 
--- Datos iniciales: Bancos peruanos
+-- 4. Datos Iniciales --
 INSERT INTO banks (name, code) VALUES 
-    ('BCP', 'BCP'),
-    ('BBVA', 'BBVA'),
-    ('Interbank', 'INTERBANK'),
-    ('Scotiabank', 'SCOTIABANK'),
-    ('Banco de la Nación', 'BN'),
-    ('Banco Pichincha', 'PICHINCHA'),
-    ('Banco Falabella', 'FALABELLA'),
-    ('MiBanco', 'MIBANCO'),
-    ('Otro', 'OTHER');
-
--- Vista para consultas rápidas de deudas con información relacionada
-CREATE VIEW debts_detailed AS
-SELECT 
-    d.id,
-    d.user_id,
-    d.bank_name,
-    b.logo_url as bank_logo,
-    d.description,
-    d.amount,
-    d.paid_amount,
-    (d.amount - d.paid_amount) as remaining_amount,
-    d.due_date,
-    d.frequency,
-    d.status,
-    d.created_date,
-    CASE 
-        WHEN d.due_date < CURRENT_DATE AND d.status != 'paid' THEN 'overdue'
-        WHEN d.due_date = CURRENT_DATE AND d.status != 'paid' THEN 'due_today'
-        WHEN d.due_date <= CURRENT_DATE + INTERVAL '7 days' AND d.status != 'paid' THEN 'due_soon'
-        ELSE 'normal'
-    END as urgency,
-    (d.due_date - CURRENT_DATE) as days_until_due,
-    COUNT(ph.id) as payment_count,
-    d.created_at,
-    d.updated_at
-FROM debts d
-LEFT JOIN banks b ON d.bank_id = b.id
-LEFT JOIN payment_history ph ON d.id = ph.debt_id
-GROUP BY d.id, b.logo_url;
-
--- ----------------------------------------------------------------------------------------
-
--- Copia y pega esto en tu consulta SQL de PostgreSQL --
-
-CREATE OR REPLACE FUNCTION get_debt_statistics(p_user_id INTEGER)
-RETURNS TABLE (
-    total_debts BIGINT,
-    total_amount DECIMAL(12, 2),
-    pending_count BIGINT,
-    pending_amount DECIMAL(12, 2),
-    overdue_count BIGINT,
-    overdue_amount DECIMAL(12, 2),
-    paid_count BIGINT,
-    paid_amount DECIMAL(12, 2)
-) AS $$ -- <--- Aquí empieza el bloque
-BEGIN
-    RETURN QUERY
-    SELECT 
-        COUNT(*)::BIGINT as total_debts,
-        COALESCE(SUM(amount), 0) as total_amount,
-        COUNT(*) FILTER (WHERE status = 'pending')::BIGINT as pending_count,
-        COALESCE(SUM(amount - paid_amount) FILTER (WHERE status = 'pending'), 0) as pending_amount,
-        COUNT(*) FILTER (WHERE status = 'overdue')::BIGINT as overdue_count,
-        COALESCE(SUM(amount - paid_amount) FILTER (WHERE status = 'overdue'), 0) as overdue_amount,
-        COUNT(*) FILTER (WHERE status = 'paid')::BIGINT as paid_count,
-        COALESCE(SUM(paid_amount) FILTER (WHERE status = 'paid'), 0) as paid_amount
-    FROM debts
-    WHERE user_id = p_user_id;
-END;
-$$ LANGUAGE plpgsql; -- <--- ¡IMPORTANTE! Asegúrate de copiar estos '$$' antes del LANGUAGE
-
-
-
-
-
-
-
+    ('BCP', 'BCP'), ('BBVA', 'BBVA'), ('Interbank', 'INTERBANK'),
+    ('Scotiabank', 'SCOTIABANK'), ('Banco de la Nación', 'BN'),
+    ('Banco Pichincha', 'PICHINCHA'), ('Banco Falabella', 'FALABELLA'),
+    ('MiBanco', 'MIBANCO'), ('Otro', 'OTHER');

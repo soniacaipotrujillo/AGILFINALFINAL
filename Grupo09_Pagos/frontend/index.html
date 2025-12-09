@@ -6,6 +6,7 @@
     <title>Gestor Inteligente de Deudas</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* TUS ESTILOS ORIGINALES (No modificados) */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
         .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
@@ -66,8 +67,8 @@
             </div>
             <form id="paymentForm" onsubmit="return false;">
                 <input type="hidden" id="payDebtId">
-                <div class="form-group"><label class="form-label">Monto (S/)</label><input type="number" step="0.01" class="form-input" id="payAmount" required></div>
-                <div class="form-group"><label class="form-label">Fecha</label><input type="date" class="form-input" id="payDate" required></div>
+                <div class="form-group"><label class="form-label">Monto a Pagar (S/)</label><input type="number" step="0.01" class="form-input" id="payAmount" required></div>
+                <div class="form-group"><label class="form-label">Fecha de Pago</label><input type="date" class="form-input" id="payDate" required></div>
                 <button class="payment-btn credit" onclick="submitPayment()">Confirmar Pago</button>
             </form>
         </div>
@@ -87,26 +88,26 @@
                         <option value="Scotiabank">Scotiabank</option><option value="Banco de la Nación">Banco de la Nación</option><option value="Otro">Otro</option>
                     </select>
                 </div>
-                <div class="form-group"><label class="form-label">Descripción</label><input type="text" class="form-input" id="debtDescription" required></div>
-                <div class="form-group"><label class="form-label">Monto (S/)</label><input type="number" step="0.01" class="form-input" id="debtAmount" required></div>
-                <div class="form-group"><label class="form-label">Vencimiento</label><input type="date" class="form-input" id="dueDate" required></div>
+                <div class="form-group"><label class="form-label">Descripción</label><input type="text" class="form-input" id="debtDescription" placeholder="Ej: Tarjeta de Crédito" required></div>
+                <div class="form-group"><label class="form-label">Monto Total (S/)</label><input type="number" step="0.01" class="form-input" id="debtAmount" required></div>
+                <div class="form-group"><label class="form-label">Fecha de Vencimiento</label><input type="date" class="form-input" id="dueDate" required></div>
                 <div class="form-group">
                     <label class="form-label">Frecuencia</label>
                     <select class="form-input" id="paymentFrequency">
                         <option value="mensual">Mensual</option><option value="quincenal">Quincenal</option><option value="unico">Único</option>
                     </select>
                 </div>
-                <button type="submit" class="payment-btn credit">Guardar</button>
+                <button type="submit" class="payment-btn credit">Guardar Deuda</button>
             </form>
         </div>
     </div>
 
     <div class="container">
         <div class="header">
-            <div class="welcome">Gestor de Deudas</div>
+            <div class="welcome">Cargando...</div>
             <div class="user-info">
                 <div class="user-avatar">U</div>
-                <button onclick="api.logout()" style="border:none; background:none; cursor:pointer;">Salir</button>
+                <button onclick="window.api.logout()" style="border:none; background:none; cursor:pointer; font-weight: bold;">Salir</button>
             </div>
         </div>
 
@@ -115,16 +116,22 @@
                 <div class="nav-item active" onclick="filterDebts('all')"><i class="fas fa-home"></i> Dashboard</div>
                 <div class="nav-item" onclick="filterDebts('pending')"><i class="fas fa-clock"></i> Pendientes</div>
                 <div class="nav-item" onclick="filterDebts('overdue')"><i class="fas fa-exclamation-triangle"></i> Vencidas</div>
-                <div class="nav-item" onclick="document.getElementById('addDebtModal').classList.add('active')"><i class="fas fa-plus-circle"></i> Agregar</div>
+                <div class="nav-item" onclick="document.getElementById('addDebtModal').classList.add('active')"><i class="fas fa-plus-circle"></i> Agregar Préstamo</div>
             </div>
 
             <div class="dashboard">
-                <div class="stats-cards">
-                    <div class="stat-card total"><h3>Total</h3><div class="stat-value" id="totalDebt">S/ 0.00</div></div>
-                    <div class="stat-card pending"><h3>Pendientes</h3><div class="stat-value" id="pendingDebt">S/ 0.00</div></div>
-                    <div class="stat-card overdue"><h3>Vencidas</h3><div class="stat-value" id="overdueDebt">S/ 0.00</div></div>
-                    <div class="stat-card paid"><h3>Pagadas</h3><div class="stat-value" id="paidDebt">S/ 0.00</div></div>
+                <div class="section-title">
+                    <span>Resumen de Deudas</span>
+                    <span id="currentMonth" style="font-size: 16px; color: #666;"></span>
                 </div>
+
+                <div class="stats-cards">
+                    <div class="stat-card total"><h3>Total Deudas</h3><div class="stat-value" id="totalDebt">S/ 0.00</div><div id="totalCount">0 deudas</div></div>
+                    <div class="stat-card pending"><h3>Pendientes</h3><div class="stat-value" id="pendingDebt">S/ 0.00</div><div id="pendingCount">0 deudas</div></div>
+                    <div class="stat-card overdue"><h3>Vencidas</h3><div class="stat-value" id="overdueDebt">S/ 0.00</div><div id="overdueCountStats">0 deudas</div></div>
+                    <div class="stat-card paid"><h3>Pagadas</h3><div class="stat-value" id="paidDebt">S/ 0.00</div><div id="paidCount">0 deudas</div></div>
+                </div>
+
                 <div id="debtList" class="debt-cards"></div>
             </div>
         </div>
@@ -135,42 +142,59 @@
         let allDebts = [];
 
         document.addEventListener('DOMContentLoaded', async () => {
-            if (!window.api || !api.isAuthenticated()) {
+            // Usamos window.api para evitar errores de referencia
+            if (!window.api || !window.api.isAuthenticated()) {
                 window.location.href = 'login.html';
                 return;
             }
             
-            const user = api.getCurrentUser();
-            if(user) document.querySelector('.welcome').textContent = `Hola, ${user.name}!`;
+            const user = window.api.getCurrentUser();
+            if(user) document.querySelector('.welcome').textContent = `¡Hola, ${user.name}! 👋`;
             
+            // Poner fecha actual
+            const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+            const now = new Date();
+            document.getElementById('currentMonth').textContent = `${months[now.getMonth()]} ${now.getFullYear()}`;
+
             await loadData();
         });
 
         async function loadData() {
             try {
-                // Estadísticas
-                const stats = await api.getStatistics();
+                // 1. Estadísticas
+                const stats = await window.api.getStatistics();
+                
                 document.getElementById('totalDebt').textContent = formatMoney(stats.total_amount);
                 document.getElementById('pendingDebt').textContent = formatMoney(stats.pending_amount);
                 document.getElementById('overdueDebt').textContent = formatMoney(stats.overdue_amount);
                 document.getElementById('paidDebt').textContent = formatMoney(stats.paid_amount);
+                
+                document.getElementById('totalCount').textContent = `${stats.total_debts || 0} deudas`;
+                document.getElementById('pendingCount').textContent = `${stats.pending_count || 0} deudas`;
+                document.getElementById('overdueCountStats').textContent = `${stats.overdue_count || 0} deudas`;
+                document.getElementById('paidCount').textContent = `${stats.paid_count || 0} deudas`;
 
-                // Deudas (Mapeo correcto de datos del backend)
-                const debtsData = await api.getAllDebts();
+                // 2. Deudas
+                const debtsData = await window.api.getAllDebts();
                 allDebts = debtsData.map(d => ({
                     id: d.id,
-                    bank: d.bank_name,       // Backend: bank_name
+                    bank: d.bank_name,
                     description: d.description,
                     amount: Number(d.amount),
-                    paid: Number(d.paid_amount), // Backend: paid_amount
+                    paid: Number(d.paid_amount),
                     remaining: Number(d.amount) - Number(d.paid_amount),
-                    date: d.due_date,        // Backend: due_date
+                    date: d.due_date,
                     status: d.status,
-                    urgency: d.urgency       // Backend: urgency
+                    urgency: d.urgency
                 }));
                 renderDebts(allDebts);
+
             } catch (error) {
-                console.error("Error:", error);
+                console.error("Error al cargar datos:", error);
+                // Si falla la API de estadísticas, es probable que sea el error de base de datos
+                if (error.message.includes('Internal Server Error')) {
+                    alert("Error de Servidor: Falta configurar la base de datos (función de estadísticas). Revisa la consola.");
+                }
             }
         }
 
@@ -179,25 +203,25 @@
             container.innerHTML = '';
             
             if (debts.length === 0) {
-                container.innerHTML = '<p style="grid-column:1/-1; text-align:center;">No hay deudas registradas.</p>';
+                container.innerHTML = '<p style="grid-column:1/-1; text-align:center; padding: 20px;">No tienes deudas registradas.</p>';
                 return;
             }
 
             debts.forEach(d => {
                 let cardClass = 'debt-card';
                 if (d.status === 'paid') cardClass += ' paid';
-                else if (d.urgency === 'overdue') cardClass += ' due-today'; // Rojo para vencidas
-                else if (d.urgency === 'due_soon') cardClass += ' due-week'; // Amarillo para próximas
+                else if (d.urgency === 'overdue') cardClass += ' due-today';
+                else if (d.urgency === 'due_soon') cardClass += ' due-week';
 
                 container.innerHTML += `
                     <div class="${cardClass}">
                         <div class="debt-header">
-                            <div class="debt-info"><h3>${d.description}</h3><small>${d.bank}</small></div>
+                            <div class="debt-info"><h3>${d.description}</h3><small style="color:#666">${d.bank}</small></div>
                             <div class="debt-amount">${formatMoney(d.remaining)}</div>
                         </div>
                         <div class="debt-details">
                             <div class="detail-item"><small>Total</small><b>${formatMoney(d.amount)}</b></div>
-                            <div class="detail-item"><small>Estado</small><b>${d.status}</b></div>
+                            <div class="detail-item"><small>Estado</small><b style="text-transform:capitalize">${d.status}</b></div>
                         </div>
                         <div class="due-date ${d.status === 'paid' ? 'paid' : (d.urgency === 'overdue' ? 'due-today' : 'normal')}">
                             Vence: ${d.date ? d.date.split('T')[0] : 'N/A'}
@@ -210,31 +234,48 @@
 
         async function saveDebt(e) {
             e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.textContent;
+            
             try {
-                await api.createDebt({
+                btn.textContent = 'Guardando...';
+                btn.disabled = true;
+
+                await window.api.createDebt({
                     bank_name: document.getElementById('bankName').value,
                     description: document.getElementById('debtDescription').value,
                     amount: document.getElementById('debtAmount').value,
                     due_date: document.getElementById('dueDate').value,
                     frequency: document.getElementById('paymentFrequency').value
                 });
+                
                 closeModal();
-                await loadData();
-            } catch(err) { alert(err.message); }
+                e.target.reset();
+                await loadData(); // Recargar datos para ver la nueva deuda
+                alert('¡Deuda guardada correctamente!');
+                
+            } catch(err) {
+                alert("Error al guardar: " + err.message);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
         }
 
         async function submitPayment() {
             try {
-                await api.createPayment({
+                await window.api.createPayment({
                     debt_id: document.getElementById('payDebtId').value,
                     amount: document.getElementById('payAmount').value,
                     payment_date: document.getElementById('payDate').value
                 });
                 closeModal();
                 await loadData();
+                alert("Pago registrado con éxito");
             } catch(err) { alert(err.message); }
         }
 
+        // Utilidades
         function formatMoney(n) { return `S/ ${Number(n || 0).toLocaleString('es-PE', {minimumFractionDigits: 2})}`; }
         function closeModal() { document.querySelectorAll('.modal').forEach(m => m.classList.remove('active')); }
         function openPayModal(id) {
@@ -243,6 +284,9 @@
             document.getElementById('paymentModal').classList.add('active');
         }
         function filterDebts(type) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            
             if (type === 'all') renderDebts(allDebts);
             else renderDebts(allDebts.filter(d => d.status === type || d.urgency === type));
         }
