@@ -6,48 +6,67 @@
     <title>Gestor Inteligente de Deudas</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* TUS ESTILOS ORIGINALES (No modificados) */
+        /* ESTILOS (Idénticos a tu diseño original) */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
         .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        
+        /* HEADER */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding: 20px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); }
         .welcome { font-size: 28px; font-weight: 700; color: #333; }
         .user-info { display: flex; align-items: center; gap: 15px; }
         .user-avatar { width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 20px; }
+
+        /* LAYOUT */
         .main-content { display: grid; grid-template-columns: 300px 1fr; gap: 25px; }
         .sidebar { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); height: fit-content; }
         .dashboard { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); }
+
+        /* NAVIGATION */
         .nav-item { display: flex; align-items: center; gap: 15px; padding: 15px; margin-bottom: 10px; border-radius: 12px; cursor: pointer; transition: all 0.3s; color: #555; font-weight: 500; }
         .nav-item:hover { background: #f3f4f6; }
         .nav-item.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .nav-item i { font-size: 20px; width: 24px; text-align: center; }
+
+        /* STATS CARDS */
         .stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; margin-bottom: 40px; }
         .stat-card { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05); color: white; }
+        .stat-card h3 { font-size: 16px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
         .stat-card.total { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
         .stat-card.pending { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
         .stat-card.overdue { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
         .stat-card.paid { background: linear-gradient(135deg, #10b981 0%, #047857 100%); }
         .stat-value { font-size: 32px; font-weight: 700; margin-bottom: 10px; }
+
+        /* DEBT CARDS */
         .debt-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; margin-bottom: 40px; }
         .debt-card { background: white; border-radius: 15px; padding: 25px; border: 2px solid #e5e7eb; transition: all 0.3s; position: relative; }
         .debt-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1); }
         .debt-card.due-today { border-color: #ef4444; background: linear-gradient(135deg, #fff5f5 0%, #fee 100%); }
         .debt-card.due-week { border-color: #f59e0b; background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); }
         .debt-card.paid { border-color: #10b981; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); }
+        
         .debt-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; }
         .debt-info h3 { font-size: 20px; font-weight: 700; color: #333; margin-bottom: 5px; }
+        .debt-bank { color: #666; font-size: 14px; display: flex; align-items: center; gap: 5px; }
         .debt-amount { font-size: 24px; font-weight: 700; color: #333; }
+        
         .debt-details { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         .detail-item { display: flex; flex-direction: column; }
         .detail-label { color: #666; font-size: 12px; text-transform: uppercase; margin-bottom: 5px; }
         .detail-value { font-size: 16px; font-weight: 600; color: #333; }
+
         .due-date { padding: 8px 15px; border-radius: 20px; font-size: 14px; font-weight: 500; display: inline-block; margin-top: 10px; }
         .due-date.due-today { background: #ef4444; color: white; }
         .due-date.due-week { background: #f59e0b; color: white; }
         .due-date.normal { background: #e5e7eb; color: #666; }
         .due-date.paid { background: #10b981; color: white; }
+
         .payment-methods { display: flex; gap: 10px; margin-top: 20px; }
         .payment-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: 500; cursor: pointer; color: white; transition: transform 0.2s; }
         .payment-btn.credit { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+        
+        /* MODALS */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
         .modal.active { display: flex; }
         .modal-content { background: white; border-radius: 20px; padding: 40px; width: 90%; max-width: 500px; }
@@ -55,6 +74,7 @@
         .form-label { display: block; margin-bottom: 8px; color: #555; font-weight: 500; }
         .form-input { width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 10px; }
         .hidden { display: none !important; }
+        
         @media (max-width: 1024px) { .main-content { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -67,8 +87,26 @@
             </div>
             <form id="paymentForm" onsubmit="return false;">
                 <input type="hidden" id="payDebtId">
-                <div class="form-group"><label class="form-label">Monto a Pagar (S/)</label><input type="number" step="0.01" class="form-input" id="payAmount" required></div>
-                <div class="form-group"><label class="form-label">Fecha de Pago</label><input type="date" class="form-input" id="payDate" required></div>
+                <div class="form-group">
+                    <label class="form-label">Monto a Pagar (S/)</label>
+                    <input type="number" step="0.01" class="form-input" id="payAmount" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fecha de Pago</label>
+                    <input type="date" class="form-input" id="payDate" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Método</label>
+                    <select class="form-input" id="payMethod">
+                        <option value="tarjeta">Tarjeta</option>
+                        <option value="transferencia">Transferencia</option>
+                        <option value="efectivo">Efectivo</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">N° Operación (Opcional)</label>
+                    <input type="text" class="form-input" id="payReference">
+                </div>
                 <button class="payment-btn credit" onclick="submitPayment()">Confirmar Pago</button>
             </form>
         </div>
@@ -84,17 +122,32 @@
                 <div class="form-group">
                     <label class="form-label">Banco</label>
                     <select class="form-input" id="bankName" required>
-                        <option value="BCP">BCP</option><option value="BBVA">BBVA</option><option value="Interbank">Interbank</option>
-                        <option value="Scotiabank">Scotiabank</option><option value="Banco de la Nación">Banco de la Nación</option><option value="Otro">Otro</option>
+                        <option value="BCP">BCP</option>
+                        <option value="BBVA">BBVA</option>
+                        <option value="Interbank">Interbank</option>
+                        <option value="Scotiabank">Scotiabank</option>
+                        <option value="Banco de la Nación">Banco de la Nación</option>
+                        <option value="Otro">Otro</option>
                     </select>
                 </div>
-                <div class="form-group"><label class="form-label">Descripción</label><input type="text" class="form-input" id="debtDescription" placeholder="Ej: Tarjeta de Crédito" required></div>
-                <div class="form-group"><label class="form-label">Monto Total (S/)</label><input type="number" step="0.01" class="form-input" id="debtAmount" required></div>
-                <div class="form-group"><label class="form-label">Fecha de Vencimiento</label><input type="date" class="form-input" id="dueDate" required></div>
+                <div class="form-group">
+                    <label class="form-label">Descripción</label>
+                    <input type="text" class="form-input" id="debtDescription" placeholder="Ej: Tarjeta de Crédito" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Monto Total (S/)</label>
+                    <input type="number" step="0.01" class="form-input" id="debtAmount" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fecha de Vencimiento</label>
+                    <input type="date" class="form-input" id="dueDate" required>
+                </div>
                 <div class="form-group">
                     <label class="form-label">Frecuencia</label>
                     <select class="form-input" id="paymentFrequency">
-                        <option value="mensual">Mensual</option><option value="quincenal">Quincenal</option><option value="unico">Único</option>
+                        <option value="mensual">Mensual</option>
+                        <option value="quincenal">Quincenal</option>
+                        <option value="unico">Único</option>
                     </select>
                 </div>
                 <button type="submit" class="payment-btn credit">Guardar Deuda</button>
@@ -107,16 +160,25 @@
             <div class="welcome">Cargando...</div>
             <div class="user-info">
                 <div class="user-avatar">U</div>
-                <button onclick="window.api.logout()" style="border:none; background:none; cursor:pointer; font-weight: bold;">Salir</button>
+                <button onclick="window.api.logout()" style="border:none; background:none; cursor:pointer; font-weight: bold; margin-left:10px;">Salir</button>
             </div>
         </div>
 
         <div class="main-content">
             <div class="sidebar">
-                <div class="nav-item active" onclick="filterDebts('all')"><i class="fas fa-home"></i> Dashboard</div>
-                <div class="nav-item" onclick="filterDebts('pending')"><i class="fas fa-clock"></i> Pendientes</div>
-                <div class="nav-item" onclick="filterDebts('overdue')"><i class="fas fa-exclamation-triangle"></i> Vencidas</div>
-                <div class="nav-item" onclick="document.getElementById('addDebtModal').classList.add('active')"><i class="fas fa-plus-circle"></i> Agregar Préstamo</div>
+                <div class="nav-item active" onclick="filterDebts('all')">
+                    <i class="fas fa-home"></i> <span>Dashboard</span>
+                </div>
+                <div class="nav-item" onclick="filterDebts('pending')">
+                    <i class="fas fa-clock"></i> <span>Pendientes</span>
+                </div>
+                <div class="nav-item" onclick="filterDebts('overdue')">
+                    <i class="fas fa-exclamation-triangle"></i> <span>Vencidas</span>
+                    <span class="status-badge status-overdue" id="overdueCount" style="margin-left:auto; background:#fee2e2; color:#dc2626; padding:2px 8px; border-radius:10px; font-size:12px;">0</span>
+                </div>
+                <div class="nav-item" onclick="document.getElementById('addDebtModal').classList.add('active')">
+                    <i class="fas fa-plus-circle"></i> <span>Agregar Préstamo</span>
+                </div>
             </div>
 
             <div class="dashboard">
@@ -126,10 +188,26 @@
                 </div>
 
                 <div class="stats-cards">
-                    <div class="stat-card total"><h3>Total Deudas</h3><div class="stat-value" id="totalDebt">S/ 0.00</div><div id="totalCount">0 deudas</div></div>
-                    <div class="stat-card pending"><h3>Pendientes</h3><div class="stat-value" id="pendingDebt">S/ 0.00</div><div id="pendingCount">0 deudas</div></div>
-                    <div class="stat-card overdue"><h3>Vencidas</h3><div class="stat-value" id="overdueDebt">S/ 0.00</div><div id="overdueCountStats">0 deudas</div></div>
-                    <div class="stat-card paid"><h3>Pagadas</h3><div class="stat-value" id="paidDebt">S/ 0.00</div><div id="paidCount">0 deudas</div></div>
+                    <div class="stat-card total">
+                        <h3>Total Deudas</h3>
+                        <div class="stat-value" id="totalDebt">S/ 0.00</div>
+                        <div id="totalCount">0 deudas</div>
+                    </div>
+                    <div class="stat-card pending">
+                        <h3>Pendientes</h3>
+                        <div class="stat-value" id="pendingDebt">S/ 0.00</div>
+                        <div id="pendingCount">0 deudas</div>
+                    </div>
+                    <div class="stat-card overdue">
+                        <h3>Vencidas</h3>
+                        <div class="stat-value" id="overdueDebt">S/ 0.00</div>
+                        <div id="overdueCountStats">0 deudas</div>
+                    </div>
+                    <div class="stat-card paid">
+                        <h3>Pagadas</h3>
+                        <div class="stat-value" id="paidDebt">S/ 0.00</div>
+                        <div id="paidCount">0 deudas</div>
+                    </div>
                 </div>
 
                 <div id="debtList" class="debt-cards"></div>
@@ -142,26 +220,31 @@
         let allDebts = [];
 
         document.addEventListener('DOMContentLoaded', async () => {
-            // Usamos window.api para evitar errores de referencia
+            // Verificar si la API está disponible y el usuario autenticado
             if (!window.api || !window.api.isAuthenticated()) {
                 window.location.href = 'login.html';
                 return;
             }
             
+            // Mostrar nombre del usuario
             const user = window.api.getCurrentUser();
-            if(user) document.querySelector('.welcome').textContent = `¡Hola, ${user.name}! 👋`;
+            if(user) {
+                document.querySelector('.welcome').textContent = `¡Hola, ${user.name}! 👋`;
+                document.querySelector('.user-avatar').textContent = user.name.charAt(0).toUpperCase();
+            }
             
-            // Poner fecha actual
+            // Fecha Actual en el header
             const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
             const now = new Date();
             document.getElementById('currentMonth').textContent = `${months[now.getMonth()]} ${now.getFullYear()}`;
 
+            // Cargar datos iniciales
             await loadData();
         });
 
         async function loadData() {
             try {
-                // 1. Estadísticas
+                // 1. Cargar Estadísticas
                 const stats = await window.api.getStatistics();
                 
                 document.getElementById('totalDebt').textContent = formatMoney(stats.total_amount);
@@ -173,9 +256,16 @@
                 document.getElementById('pendingCount').textContent = `${stats.pending_count || 0} deudas`;
                 document.getElementById('overdueCountStats').textContent = `${stats.overdue_count || 0} deudas`;
                 document.getElementById('paidCount').textContent = `${stats.paid_count || 0} deudas`;
+                
+                // Actualizar badge del sidebar
+                const overdueBadge = document.getElementById('overdueCount');
+                overdueBadge.textContent = stats.overdue_count || 0;
+                overdueBadge.style.display = stats.overdue_count > 0 ? 'inline-block' : 'none';
 
-                // 2. Deudas
+                // 2. Cargar Deudas
                 const debtsData = await window.api.getAllDebts();
+                
+                // Mapear los datos que vienen del backend a un formato limpio para el frontend
                 allDebts = debtsData.map(d => ({
                     id: d.id,
                     bank: d.bank_name,
@@ -185,15 +275,16 @@
                     remaining: Number(d.amount) - Number(d.paid_amount),
                     date: d.due_date,
                     status: d.status,
-                    urgency: d.urgency
+                    urgency: d.urgency // Esto viene calculado desde el backend
                 }));
+                
                 renderDebts(allDebts);
 
             } catch (error) {
                 console.error("Error al cargar datos:", error);
-                // Si falla la API de estadísticas, es probable que sea el error de base de datos
-                if (error.message.includes('Internal Server Error')) {
-                    alert("Error de Servidor: Falta configurar la base de datos (función de estadísticas). Revisa la consola.");
+                // Si el error es de sesión, redirigir
+                if (error.message && (error.message.includes('sesión') || error.message.includes('token'))) {
+                    window.location.href = 'login.html';
                 }
             }
         }
@@ -202,31 +293,68 @@
             const container = document.getElementById('debtList');
             container.innerHTML = '';
             
-            if (debts.length === 0) {
-                container.innerHTML = '<p style="grid-column:1/-1; text-align:center; padding: 20px;">No tienes deudas registradas.</p>';
+            if (!debts || debts.length === 0) {
+                container.innerHTML = '<p style="grid-column:1/-1; text-align:center; padding: 40px; color:#666;">No tienes deudas registradas en esta categoría.</p>';
                 return;
             }
 
             debts.forEach(d => {
                 let cardClass = 'debt-card';
-                if (d.status === 'paid') cardClass += ' paid';
-                else if (d.urgency === 'overdue') cardClass += ' due-today';
-                else if (d.urgency === 'due_soon') cardClass += ' due-week';
+                let dateClass = 'due-date normal';
+                let statusText = d.status;
+
+                // Lógica de colores según estado y urgencia
+                if (d.status === 'paid') {
+                    cardClass += ' paid';
+                    dateClass = 'due-date paid';
+                    statusText = 'Pagada';
+                } else if (d.urgency === 'overdue' || d.status === 'overdue') {
+                    cardClass += ' due-today'; // Rojo
+                    dateClass = 'due-date due-today';
+                    statusText = 'Vencida';
+                } else if (d.urgency === 'due_soon') {
+                    cardClass += ' due-week'; // Amarillo
+                    dateClass = 'due-date due-week';
+                    statusText = 'Próxima';
+                } else {
+                    statusText = 'Pendiente';
+                }
+
+                // Formatear fecha
+                const fechaVencimiento = d.date ? d.date.split('T')[0] : 'N/A';
 
                 container.innerHTML += `
                     <div class="${cardClass}">
                         <div class="debt-header">
-                            <div class="debt-info"><h3>${d.description}</h3><small style="color:#666">${d.bank}</small></div>
+                            <div class="debt-info">
+                                <h3>${d.description}</h3>
+                                <small style="color:#666"><i class="fas fa-university"></i> ${d.bank}</small>
+                            </div>
                             <div class="debt-amount">${formatMoney(d.remaining)}</div>
                         </div>
+                        
                         <div class="debt-details">
-                            <div class="detail-item"><small>Total</small><b>${formatMoney(d.amount)}</b></div>
-                            <div class="detail-item"><small>Estado</small><b style="text-transform:capitalize">${d.status}</b></div>
+                            <div class="detail-item">
+                                <span class="detail-label">Total Original</span>
+                                <span class="detail-value">${formatMoney(d.amount)}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Estado</span>
+                                <span class="detail-value" style="text-transform:capitalize; font-weight:bold;">${statusText}</span>
+                            </div>
                         </div>
-                        <div class="due-date ${d.status === 'paid' ? 'paid' : (d.urgency === 'overdue' ? 'due-today' : 'normal')}">
-                            Vence: ${d.date ? d.date.split('T')[0] : 'N/A'}
+
+                        <div class="${dateClass}">
+                            <i class="fas fa-calendar"></i> Vence: ${fechaVencimiento}
                         </div>
-                        ${d.status !== 'paid' ? `<div class="payment-methods"><button class="payment-btn credit" onclick="openPayModal(${d.id})">Pagar</button></div>` : ''}
+
+                        ${d.status !== 'paid' ? `
+                            <div class="payment-methods">
+                                <button class="payment-btn credit" onclick="openPayModal(${d.id}, ${d.remaining})">
+                                    Pagar Ahora
+                                </button>
+                            </div>
+                        ` : ''}
                     </div>
                 `;
             });
@@ -251,7 +379,7 @@
                 
                 closeModal();
                 e.target.reset();
-                await loadData(); // Recargar datos para ver la nueva deuda
+                await loadData(); // Recargar todo para ver la nueva deuda
                 alert('¡Deuda guardada correctamente!');
                 
             } catch(err) {
@@ -262,33 +390,62 @@
             }
         }
 
-        async function submitPayment() {
-            try {
-                await window.api.createPayment({
-                    debt_id: document.getElementById('payDebtId').value,
-                    amount: document.getElementById('payAmount').value,
-                    payment_date: document.getElementById('payDate').value
-                });
-                closeModal();
-                await loadData();
-                alert("Pago registrado con éxito");
-            } catch(err) { alert(err.message); }
-        }
-
-        // Utilidades
-        function formatMoney(n) { return `S/ ${Number(n || 0).toLocaleString('es-PE', {minimumFractionDigits: 2})}`; }
-        function closeModal() { document.querySelectorAll('.modal').forEach(m => m.classList.remove('active')); }
-        function openPayModal(id) {
+        function openPayModal(id, amount) {
             document.getElementById('payDebtId').value = id;
+            document.getElementById('payAmount').value = amount;
             document.getElementById('payDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('paymentModal').classList.add('active');
         }
+
+        async function submitPayment() {
+            try {
+                const amount = document.getElementById('payAmount').value;
+                if(!amount || amount <= 0) return alert("Monto inválido");
+
+                await window.api.createPayment({
+                    debt_id: document.getElementById('payDebtId').value,
+                    amount: amount,
+                    payment_date: document.getElementById('payDate').value,
+                    payment_method: document.getElementById('payMethod').value,
+                    reference: document.getElementById('payReference').value
+                });
+                
+                closeModal();
+                await loadData();
+                alert("Pago registrado con éxito");
+            } catch(err) {
+                alert("Error al pagar: " + err.message);
+            }
+        }
+
+        // --- Utilidades ---
+
+        function formatMoney(n) {
+            return `S/ ${Number(n || 0).toLocaleString('es-PE', {minimumFractionDigits: 2})}`;
+        }
+
         function filterDebts(type) {
+            // Actualizar menú activo
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             event.currentTarget.classList.add('active');
             
-            if (type === 'all') renderDebts(allDebts);
-            else renderDebts(allDebts.filter(d => d.status === type || d.urgency === type));
+            // Filtrar array local
+            if (type === 'all') {
+                renderDebts(allDebts);
+            } else {
+                const filtered = allDebts.filter(d => 
+                    d.status === type || d.urgency === type
+                );
+                renderDebts(filtered);
+            }
+        }
+
+        function showAddDebtModal() {
+            document.getElementById('addDebtModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
         }
     </script>
 </body>

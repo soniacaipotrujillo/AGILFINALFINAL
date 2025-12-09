@@ -163,11 +163,10 @@
     </div>
 
     <script src="frontend_api_integration.js"></script>
+    
     <script>
-        // La variable 'api' ya existe en frontend_api_integration.js, así que la usamos directamente.
-
-        // Si ya está logueado, redirigir al dashboard
-        if (api.isAuthenticated()) {
+        // Verificamos si window.api existe antes de usarlo
+        if (window.api && window.api.isAuthenticated()) {
             window.location.href = 'index.html'; 
         }
 
@@ -175,23 +174,35 @@
             e.preventDefault();
             const btn = e.target.querySelector('button');
             const errorDiv = document.getElementById('errorAlert');
+            const originalText = btn.textContent;
             
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
+            errorDiv.style.display = 'none';
+
+            // Validación de seguridad simple
+            if (!window.api) {
+                errorDiv.textContent = "Error: La conexión con el sistema no se ha cargado. Refresca la página.";
+                errorDiv.style.display = 'block';
+                return;
+            }
+
             try {
                 btn.textContent = 'Cargando...';
                 btn.disabled = true;
-                errorDiv.style.display = 'none';
 
-                await api.login(email, password);
+                // Usamos window.api.login
+                await window.api.login(email, password);
                 
-                // Redirigir al dashboard tras login exitoso
+                // Si el login es exitoso, redirigimos
                 window.location.href = 'index.html'; 
+
             } catch (error) {
-                errorDiv.textContent = error.message;
+                console.error("Error en login:", error);
+                errorDiv.textContent = error.message || 'Error al conectar con el servidor';
                 errorDiv.style.display = 'block';
-                btn.textContent = 'Iniciar Sesión';
+                btn.textContent = originalText;
                 btn.disabled = false;
             }
         });

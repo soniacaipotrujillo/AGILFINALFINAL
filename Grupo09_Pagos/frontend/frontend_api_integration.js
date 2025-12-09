@@ -116,5 +116,8 @@ class DebtAPI {
 }
 
 // ESTA LÍNEA ES LA MÁS IMPORTANTE:
+// AL FINAL DEL ARCHIVO, DEJA SOLO ESTO:
 window.api = new DebtAPI(); 
-const api = window.api;
+// Elimina la línea: const api = window.api; (Esto causaba el error)
+console.log('API inicializada correctamente');
+window.api = new DebtAPI();

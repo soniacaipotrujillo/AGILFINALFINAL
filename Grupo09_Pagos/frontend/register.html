@@ -61,13 +61,13 @@
     </div>
 
     <script src="frontend_api_integration.js"></script>
+    
     <script>
-        // La variable 'api' ya existe en frontend_api_integration.js, así que la usamos directamente.
-
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button');
             const errorDiv = document.getElementById('errorAlert');
+            const originalText = btn.textContent;
             
             const name = document.getElementById('name').value;
             const email = document.getElementById('email').value;
@@ -76,6 +76,7 @@
 
             errorDiv.style.display = 'none';
 
+            // Validaciones
             if (password !== confirmPassword) {
                 errorDiv.textContent = 'Las contraseñas no coinciden';
                 errorDiv.style.display = 'block';
@@ -88,19 +89,28 @@
                 return;
             }
 
+            // Verificar si la API cargó correctamente
+            if (!window.api) {
+                errorDiv.textContent = 'Error interno: La API no se ha cargado. Revisa la consola.';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
             try {
                 btn.textContent = 'Creando cuenta...';
                 btn.disabled = true;
 
-                // Registro exitoso devuelve token y usuario según tu backend
-                await api.register(name, email, password);
+                // Usamos window.api para evitar errores de referencia
+                await window.api.register(name, email, password);
                 
-                // Redirigir al dashboard
+                // Si llegamos aquí, el registro fue exitoso
                 window.location.href = 'index.html';
+                
             } catch (error) {
-                errorDiv.textContent = error.message;
+                console.error("Error en registro:", error);
+                errorDiv.textContent = error.message || 'Error al conectar con el servidor';
                 errorDiv.style.display = 'block';
-                btn.textContent = 'Registrarme';
+                btn.textContent = originalText;
                 btn.disabled = false;
             }
         });
