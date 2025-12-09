@@ -164,11 +164,11 @@
 
     <script src="frontend_api_integration.js"></script>
     <script>
-        const api = new DebtAPI();
+        // La variable 'api' ya existe en frontend_api_integration.js, así que la usamos directamente.
 
         // Si ya está logueado, redirigir al dashboard
         if (api.isAuthenticated()) {
-            window.location.href = 'index.html'; // Cambia esto si tu dashboard tiene otro nombre
+            window.location.href = 'index.html'; 
         }
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
