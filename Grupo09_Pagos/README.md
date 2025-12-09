@@ -1,34 +1,128 @@
-# Sistema de gestión de pagos
+# 💰 Gestor Inteligente de Deudas
 
-Este proyecto implementa un flujo web para gestionar deudas y pagos mensuales. El frontend usa HTML, CSS y JavaScript nativos, el backend se desarrolla en Node.js y los datos persisten en PostgreSQL.
+![Estado](https://img.shields.io/badge/Estado-En_Desarrollo-green)
+![Node.js](https://img.shields.io/badge/Node.js-v18+-green)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14+-blue)
+![Frontend](https://img.shields.io/badge/Frontend-HTML%2FCSS%2FJS-orange)
 
-## Objetivo funcional
-El sistema debe permitir a un usuario visualizar y gestionar sus deudas de forma clara cada mes:
-1. Notificar cuando una deuda vence el día actual, sin que el usuario tenga que ingresar manualmente al sistema.
-2. Mostrar por defecto solo las deudas del mes actual más las deudas pendientes de meses anteriores.
-3. Destacar visualmente las deudas: amarillo para las que vencen esta semana y siguen pendientes; rojo para las vencidas no pagadas.
-4. Permitir el pago de cualquier deuda en el momento que el usuario elija.
+Un sistema web completo para la gestión financiera personal, diseñado para organizar, visualizar y alertar sobre deudas y pagos mensuales de manera intuitiva.
 
-## Arquitectura
-- **Frontend (HTML/CSS/JS):** Interfaz web ligera que consulta la API para obtener las deudas, aplica las reglas de resaltado y expone acciones de pago.
-- **Backend (Node.js):** API REST que expone endpoints para consultar deudas, actualizar estados de pago y enviar notificaciones de vencimiento.
-- **Base de datos (PostgreSQL):** Almacena deudas, fechas de vencimiento, estados de pago y registros de usuario necesarios para las notificaciones.
+---
 
-### Flujo de integración
-1. El frontend solicita a la API las deudas filtradas por mes y estado.
-2. El backend consulta PostgreSQL, aplica las reglas de negocio (vencimientos del día y de la semana) y devuelve la información ya categorizada para el resaltado.
-3. Cuando el usuario paga una deuda, el frontend envía la acción al backend, que actualiza el estado en la base de datos y responde con el nuevo estado de la deuda.
-4. Un proceso programado en Node.js puede enviar notificaciones diarias para las deudas que vencen en el día.
+## 📸 Vistazo del Proyecto
 
-## Conexión a PostgreSQL
-Parámetros de referencia para la conexión de desarrollo:
-- **Servidor:** `localhost`
-- **Tipo de autenticación:** Contraseña
-- **Usuario:** `postgres`
-- **Contraseña:** (definir en entorno local)
-- **Base de datos:** `postgres`
-- **Nombre de conexión:** `Grupo09_Agil_Developer`
-- **Grupo de servidores:** `Servidores`
+<div align="center">
+  <img src="./img/dashboard.png" alt="Dashboard Principal" width="800">
+  <p><em>Dashboard con resumen financiero y alertas visuales</em></p>
+</div>
 
-## Recursos
-- Historia de usuario: [Documento colaborativo](https://docs.google.com/document/d/1_DulyZ7aHq9F_kUdg4m_Hee7Zefu3PVZVzbflqofOhI/edit?usp=sharing)
+---
+
+## 🚀 Características Principales
+
+1.  **Dashboard Informativo:** Visualización inmediata de deuda total, montos pendientes, vencidos y pagados.
+2.  **Sistema de Semáforo:**
+    * 🔴 **Rojo:** Deudas vencidas no pagadas.
+    * 🟡 **Amarillo:** Deudas que vencen en la semana actual.
+    * ⚪ **Normal:** Deudas al día o futuras.
+3.  **Gestión de Pagos:** Registro de pagos parciales o totales con diferentes métodos (Transferencia, Efectivo, Tarjeta).
+4.  **Cálculos Automáticos:** El sistema actualiza los saldos y estados de las deudas automáticamente mediante Triggers en la base de datos.
+5.  **Historial y Notificaciones:** (En desarrollo) Alertas sobre vencimientos del día sin necesidad de entrar a la configuración profunda.
+
+---
+
+## 🛠️ Stack Tecnológico
+
+* **Frontend:** HTML5, CSS3, JavaScript (ES6+), FontAwesome.
+* **Backend:** Node.js, Express.js.
+* **Base de Datos:** PostgreSQL con PL/pgSQL (Funciones y Triggers).
+* **Seguridad:** JWT (JSON Web Tokens) para autenticación y Bcrypt para encriptación de contraseñas.
+
+---
+
+## ⚙️ Instalación y Configuración
+
+Sigue estos pasos para ejecutar el proyecto en tu entorno local.
+
+### 1. Prerrequisitos
+* Tener instalado **Node.js** y **npm**.
+* Tener instalado y corriendo **PostgreSQL**.
+
+### 2. Configuración de la Base de Datos
+1.  Crea una base de datos llamada `debt_manager`.
+2.  Ejecuta el script SQL completo ubicado en `db/debt_manager_db_schema.sql`.
+    * *Nota: Es crucial ejecutar todo el script para que se creen las tablas, triggers y la función de estadísticas.*
+
+```
+psql -U postgres -d debt_manager -f db/debt_manager_db_schema.sql
+3. Configuración del Backend
+Navega a la carpeta del servidor:
+
+
+
+cd Grupo09_Pagos/backend
+Instala las dependencias:
+
+
+
+npm install
+Crea un archivo .env en la carpeta backend con el siguiente contenido:
+
+Fragmento de código
+
+PGHOST=localhost
+PGPORT=5432
+PGDATABASE=debt_manager
+PGUSER=postgres
+PGPASSWORD=tu_contraseña_aqui
+PORT=3000
+JWT_SECRET=tu_clave_secreta_segura
+Inicia el servidor:
+
+
+
+npm run dev
+Deberías ver: "Servidor escuchando en http://localhost:3000"
+
+4. Ejecución del Frontend
+Ve a la carpeta Grupo09_Pagos/frontend.
+
+Abre el archivo login.html o index.html en tu navegador.
+
+Recomendación: Usa una extensión como "Live Server" en VS Code para evitar problemas de CORS, aunque el código está adaptado para funcionar localmente.
+
+📂 Estructura del Proyecto
+
+Grupo09_Pagos/
+├── backend/                # API REST (Node.js/Express)
+│   ├── routes/             # Rutas de la API (Auth, Deudas, Pagos...)
+│   ├── db.js               # Conexión a PostgreSQL
+│   ├── auth.js             # Lógica de JWT y seguridad
+│   └── server.js           # Punto de entrada del servidor
+├── db/
+│   └── debt_manager_db_schema.sql  # Script de creación de BD
+├── frontend/               # Interfaz de Usuario
+│   ├── index.html          # Dashboard principal
+│   ├── login.html          # Inicio de sesión
+│   ├── register.html       # Registro de usuarios
+│   └── frontend_api_integration.js # Conexión con el Backend
+└── README.md
+🔗 Endpoints de la API
+La API corre en http://localhost:3000/api y cuenta con los siguientes recursos principales:
+
+Auth: /auth/login, /auth/register
+
+Deudas: /debts (GET, POST, PUT, DELETE)
+
+Pagos: /payments (POST para registrar pago, GET para historial)
+
+Estadísticas: /statistics (Resumen financiero calculado en BD)
+
+Bancos: /banks (Lista de entidades financieras)
+
+📄 Licencia
+Este proyecto es de uso académico/personal para el Grupo 09.
+
+
+### Recomendación adicional:
+Para que las imágenes se vean, crea una carpeta llamada `img` dentro de tu proyecto, guarda ahí tus captu
