@@ -6,57 +6,91 @@
     <title>Iniciar Sesión</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .auth-card { background: white; border-radius: 20px; padding: 40px; width: 100%; max-width: 400px; text-align: center; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-        .btn-primary { width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; font-weight: bold; }
-        .error-message { color: red; display: none; margin-bottom: 10px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }
+        .auth-card { background: white; border-radius: 20px; padding: 40px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; }
+        .icon-container { width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; font-size: 24px; }
+        h2 { margin: 0 0 10px; color: #333; }
+        .subtitle { color: #666; font-size: 14px; margin-bottom: 30px; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 8px; box-sizing: border-box; }
+        .btn-primary { width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .error-message { background-color: #fee2e2; color: #dc2626; padding: 10px; border-radius: 6px; font-size: 14px; margin-bottom: 20px; display: none; }
+        .links { margin-top: 20px; font-size: 14px; }
+        .links a { color: #667eea; text-decoration: none; font-weight: 600; }
     </style>
 </head>
 <body>
     <div class="auth-card">
+        <div class="icon-container"><i class="fas fa-wallet"></i></div>
         <h2>Bienvenido</h2>
+        <p class="subtitle">Gestiona tus finanzas inteligentemente</p>
+
         <div id="errorAlert" class="error-message"></div>
+
         <form id="loginForm">
-            <input type="email" id="email" placeholder="Correo" required>
-            <input type="password" id="password" placeholder="Contraseña" required>
-            <div style="text-align: right; margin-top: 5px; font-size: 12px;">
-                <a href="recovery.html" style="text-decoration: none; color: #666;">¿Olvidaste tu contraseña?</a>
+            <div style="text-align: left;">
+                <label style="font-size: 14px; font-weight: 500; color: #333;">Correo</label>
+                <input type="email" id="email" required placeholder="ejemplo@correo.com">
             </div>
-            <button type="submit" class="btn-primary">Ingresar</button>
+            <div style="text-align: left;">
+                <label style="font-size: 14px; font-weight: 500; color: #333;">Contraseña</label>
+                <input type="password" id="password" required placeholder="••••••••">
+            </div>
+            
+            <div style="text-align: right; margin-bottom: 20px;">
+                <a href="recovery.html" style="font-size: 12px; color: #666; text-decoration: none;">¿Olvidaste tu contraseña?</a>
+            </div>
+
+            <button type="submit" class="btn-primary">Iniciar Sesión</button>
         </form>
-        <p style="margin-top: 20px; font-size: 14px;">
-            ¿No tienes cuenta? <a href="register.html" style="color: #667eea;">Regístrate</a>
-        </p>
+
+        <div class="links">
+            ¿No tienes cuenta? <a href="register.html">Regístrate aquí</a>
+        </div>
     </div>
 
     <script src="frontend_api_integration.js"></script>
     <script>
-        // Verificación de seguridad
-        if (window.api && window.api.isAuthenticated()) {
-            window.location.href = 'index.html';
-        }
-
+        // Lógica de Login
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
             const btn = e.target.querySelector('button');
             const errorDiv = document.getElementById('errorAlert');
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            const originalText = btn.textContent;
+
+            // Reiniciar errores
+            errorDiv.style.display = 'none';
+            btn.textContent = 'Cargando...';
+            btn.disabled = true;
+
+            // Verificar si la API se cargó (window.api debe existir)
+            if (!window.api) {
+                errorDiv.textContent = "Error interno: No se pudo cargar el archivo de conexión (API).";
+                errorDiv.style.display = 'block';
+                btn.textContent = originalText;
+                btn.disabled = false;
+                return;
+            }
 
             try {
-                btn.textContent = 'Cargando...';
-                btn.disabled = true;
-                errorDiv.style.display = 'none';
-
-                // Usamos la conexión global
+                // Intentar login
                 await window.api.login(email, password);
+                
+                // Si pasa, redirigir
                 window.location.href = 'index.html';
 
             } catch (error) {
-                errorDiv.textContent = error.message;
+                console.error(error);
+                // Mostrar error amigable
+                if (error.message.includes('Failed to fetch')) {
+                    errorDiv.textContent = "No se pudo conectar al servidor. Asegúrate de ejecutar 'npm run dev' en el backend.";
+                } else {
+                    errorDiv.textContent = error.message;
+                }
                 errorDiv.style.display = 'block';
-                btn.textContent = 'Ingresar';
+                btn.textContent = originalText;
                 btn.disabled = false;
             }
         });

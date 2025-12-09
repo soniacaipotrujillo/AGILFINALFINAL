@@ -1,4 +1,3 @@
-// frontend/frontend_api_integration.js
 const API_URL = 'http://localhost:3000/api';
 
 class DebtAPI {
@@ -24,7 +23,7 @@ class DebtAPI {
         return data;
     }
 
-    // AUTENTICACIÓN
+    // --- AUTENTICACIÓN ---
     async register(name, email, password) {
         const res = await fetch(`${API_URL}/auth/register`, {
             method: 'POST',
@@ -54,40 +53,50 @@ class DebtAPI {
     }
 
     logout() {
-        localStorage.clear();
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         window.location.href = 'login.html';
     }
 
     isAuthenticated() { return !!this.token; }
     getCurrentUser() { return JSON.parse(localStorage.getItem('user')); }
 
-    // NEGOCIO
-    async getStatistics() { return this.req('/statistics'); }
-    async getAllDebts(params) { 
-        const qs = new URLSearchParams(params).toString();
-        const res = await fetch(`${API_URL}/debts?${qs}`, { headers: this.getHeaders() });
+    // --- DEUDAS ---
+    async getAllDebts(filters = {}) {
+        const params = new URLSearchParams(filters).toString();
+        const res = await fetch(`${API_URL}/debts?${params}`, { headers: this.getHeaders() });
         return await this.handleResponse(res);
     }
-    async createDebt(data) { 
-        const res = await fetch(`${API_URL}/debts`, { 
-            method: 'POST', headers: this.getHeaders(), body: JSON.stringify(data) 
+
+    async createDebt(data) {
+        const res = await fetch(`${API_URL}/debts`, {
+            method: 'POST', headers: this.getHeaders(), body: JSON.stringify(data)
         });
         return await this.handleResponse(res);
     }
+
+    // --- ESTADÍSTICAS ---
+    async getStatistics() {
+        const res = await fetch(`${API_URL}/statistics`, { headers: this.getHeaders() });
+        return await this.handleResponse(res);
+    }
+    
+    // --- PAGOS ---
     async createPayment(data) {
         const res = await fetch(`${API_URL}/payments`, {
             method: 'POST', headers: this.getHeaders(), body: JSON.stringify(data)
         });
         return await this.handleResponse(res);
     }
-    
-    // RECUPERACIÓN (Si la usas)
+
+    // --- RECUPERACIÓN ---
     async requestResetCode(email) {
         const res = await fetch(`${API_URL}/auth/forgot-password`, {
             method: 'POST', headers: this.getHeaders(false), body: JSON.stringify({ email })
         });
         return await this.handleResponse(res);
     }
+    
     async confirmPasswordReset(email, code, newPassword) {
         const res = await fetch(`${API_URL}/auth/reset-password`, {
             method: 'POST', headers: this.getHeaders(false), body: JSON.stringify({ email, code, newPassword })
@@ -96,8 +105,5 @@ class DebtAPI {
     }
 }
 
-// --- SOLUCIÓN DEL ERROR ---
-// Guardamos la API en la ventana global para que todos la vean
-window.api = new DebtAPI(); 
-// NO declaramos 'const api' aquí para evitar conflictos.
-console.log('API lista en window.api');
+// Inicialización global única y segura
+window.api = new DebtAPI();
