@@ -1,0 +1,29 @@
+# --- Dependencias (Lo más importante) ---
+# Ignorar la carpeta de librerías de Node.js (se regenera con npm install)
+node_modules/
+/backend/node_modules/
+
+# --- Logs y Errores ---
+npm-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# --- Entorno y Seguridad ---
+# Ignorar archivos que guardan variables de entorno (claves, puertos, etc.)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# NOTA: Veo un archivo llamado 'debt_manager_env_config.sh'.
+# Si ese archivo tiene contraseñas reales, descomenta la siguiente línea:
+# debt_manager_env_config.sh
+
+# --- Archivos del Sistema Operativo ---
+.DS_Store
+Thumbs.db
+
+# --- IDEs y Editores (Opcional) ---
+.vscode/
+.idea/
