@@ -203,14 +203,14 @@
 
         <div class="main-content">
             <div class="sidebar">
-                <div class="nav-item active" onclick="filterDebts('all')">
+                <div class="nav-item active" data-filter="all" onclick="filterDebts('all', event)">
                     <i class="fas fa-home"></i> <span>Dashboard</span>
                 </div>
-                <div class="nav-item" onclick="filterDebts('pending')">
+                <div class="nav-item" data-filter="pending" onclick="filterDebts('pending', event)">
                     <i class="fas fa-clock"></i> <span>Pendientes</span>
                     <span class="status-badge status-pending" id="pendingCountBadge" style="margin-left:auto; background:#fef3c7; color:#d97706; padding:2px 8px; border-radius:10px; font-size:12px; display:none;">0</span>
                 </div>
-                <div class="nav-item" onclick="filterDebts('overdue')">
+                <div class="nav-item" data-filter="overdue" onclick="filterDebts('overdue', event)">
                     <i class="fas fa-exclamation-triangle"></i> <span>Vencidas</span>
                     <span class="status-badge status-overdue" id="overdueCount" style="margin-left:auto; background:#fee2e2; color:#dc2626; padding:2px 8px; border-radius:10px; font-size:12px;">0</span>
                 </div>
@@ -508,9 +508,14 @@
             return `S/ ${Number(n || 0).toLocaleString('es-PE', {minimumFractionDigits: 2})}`;
         }
 
-        function filterDebts(type) {
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+        function filterDebts(type, evt) {
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(el => el.classList.remove('active'));
+
+            const target = evt?.currentTarget || document.querySelector(`.nav-item[data-filter="${type}"]`) || navItems[0];
+            if (target) {
+                target.classList.add('active');
+            }
             
             if (type === 'all') {
                 renderDebts(allDebts);
