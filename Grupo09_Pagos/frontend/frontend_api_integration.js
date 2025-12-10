@@ -26,9 +26,9 @@ class DebtAPI {
     // --- AUTENTICACIÓN ---
     async register(name, email, password) {
         const res = await fetch(`${API_URL}/auth/register`, {
-            method: 'POST',
-            headers: this.getHeaders(false),
-            body: JSON.stringify({ name, email, password })
+        method: 'POST',
+        headers: this.getHeaders(false),
+        body: JSON.stringify({ name, email, password, phone }) 
         });
         const data = await this.handleResponse(res);
         this.saveSession(data);

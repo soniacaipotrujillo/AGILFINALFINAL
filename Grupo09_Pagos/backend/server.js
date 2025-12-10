@@ -3,43 +3,72 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const { pool } = require('./db');
 
-const authRoutes = require('./routes.auth');
-const debtRoutes = require('./routes.debts');
-const paymentRoutes = require('./routes.payments');
-const notificationRoutes = require('./routes.notifications');
-const bankRoutes = require('./routes.banks');
-const statisticsRoutes = require('./routes.statistics');
+// --- 1. Importación de Funciones de Cron ---
+// Usamos try/catch para que el servidor NO CAIGA si el archivo falta o falla.
+let iniciarTareasProgramadas;
+try {
+    const cronModule = require('./cronJobs');
+    iniciarTareasProgramadas = cronModule.iniciarTareasProgramadas;
+} catch (e) {
+    console.warn('⚠️ No se iniciarán alertas diarias (cronJobs.js no cargado).');
+}
 
 dotenv.config();
 
 const app = express();
+
+// Middlewares
 app.use(cors());
 app.use(express.json());
 
+// --- 2. Importación y Uso de Rutas ---
 const API_PREFIX = '/api';
 
+try {
+    // Estas son las variables que deben ser funciones/routers
+    const authRoutes = require('./routes.auth');
+    const debtRoutes = require('./routes.debts');
+    const paymentRoutes = require('./routes.payments');
+    const notificationRoutes = require('./routes.notifications');
+    const bankRoutes = require('./routes.banks');
+    const statisticsRoutes = require('./routes.statistics');
+
+    // Si alguna de estas es undefined, el servidor crashea AQUÍ.
+    app.use(`${API_PREFIX}/auth`, authRoutes);
+    app.use(`${API_PREFIX}/debts`, debtRoutes);
+    app.use(`${API_PREFIX}/payments`, paymentRoutes);
+    app.use(`${API_PREFIX}/notifications`, notificationRoutes);
+    app.use(`${API_PREFIX}/banks`, bankRoutes);
+    app.use(`${API_PREFIX}/statistics`, statisticsRoutes);
+    
+  } catch (error) {
+        console.error('❌ ERROR CRÍTICO al cargar una ruta:', error.message);
+        console.error('Revise la sintaxis de sus archivos routes.*.js y asegúrese de que terminen con: module.exports = router;');
+        process.exit(1); // Detenemos el servidor para forzar la corrección
+    }
+
+
+// Ruta de prueba
 app.get('/', (_req, res) => {
-  res.json({ message: 'API de gestión de deudas operativa' });
+    res.json({ message: 'API de gestión de deudas operativa' });
 });
 
-app.use(`${API_PREFIX}/auth`, authRoutes);
-app.use(`${API_PREFIX}/debts`, debtRoutes);
-app.use(`${API_PREFIX}/payments`, paymentRoutes);
-app.use(`${API_PREFIX}/notifications`, notificationRoutes);
-app.use(`${API_PREFIX}/banks`, bankRoutes);
-app.use(`${API_PREFIX}/statistics`, statisticsRoutes);
-
-app.use((err, _req, res, _next) => {
-  console.error('Error no controlado', err);
-  res.status(500).json({ error: 'Error interno del servidor' });
+// Manejo de errores 404
+app.use((req, res, next) => {
+    res.status(404).send("Lo siento, no se encontró esa ruta.");
 });
+
+// --- INICIO DE TAREAS PROGRAMADAS ---
+if (iniciarTareasProgramadas) {
+    iniciarTareasProgramadas();
+}
 
 const port = process.env.PORT || 3000;
 app.listen(port, async () => {
-  try {
-    await pool.query('SELECT 1');
-    console.log(`Servidor escuchando en http://localhost:${port}`);
-  } catch (err) {
-    console.error('No se pudo conectar a la base de datos', err);
-  }
+    try {
+        await pool.query('SELECT 1');
+        console.log(`Servidor escuchando en http://localhost:${port}`);
+    } catch (err) {
+        console.error('No se pudo conectar a la base de datos', err);
+    }
 });

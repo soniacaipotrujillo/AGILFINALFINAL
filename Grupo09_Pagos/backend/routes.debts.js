@@ -1,32 +1,15 @@
 const express = require('express');
 const { pool } = require('./db');
 const { authMiddleware } = require('./auth');
-const router = express.Router();
+const { enviarResumenVencidas } = require('./notifications'); // Módulo para enviar WhatsApp
 
+const router = express.Router();
 router.use(authMiddleware);
 
-// CREAR DEUDA
-router.post('/', async (req, res) => {
-    const { bank_name, description, amount, due_date, frequency } = req.body;
-    
-    try {
-        const result = await pool.query(
-            `INSERT INTO debts (user_id, bank_name, description, amount, due_date, frequency, status) 
-             VALUES ($1, $2, $3, $4, $5, $6, 'pending') 
-             RETURNING *`,
-            [req.user.id, bank_name, description, amount, due_date, frequency]
-        );
-        res.status(201).json(result.rows[0]);
-    } catch (e) {
-        console.error(e);
-        res.status(500).json({ error: e.message });
-    }
-});
-
-// OBTENER DEUDAS (MODIFICADO PARA VER FUTURAS)
+// --- OBTENER DEUDAS (Utiliza la lógica del frontend) ---
 router.get('/', async (req, res) => {
     try {
-        // Esta consulta trae TODAS las deudas que no estén pagadas (incluyendo 2026, 2030, etc.)
+        // Esta consulta trae TODAS las deudas no pagadas (incluye futuras, vencidas, próximas)
         const query = `
             SELECT *, 
             (amount - paid_amount) as remaining_amount,
@@ -44,37 +27,99 @@ router.get('/', async (req, res) => {
         const { rows } = await pool.query(query, [req.user.id]);
         res.json(rows);
     } catch (e) { 
-        console.error(e);
-        res.status(500).json({ error: e.message }); 
+        console.error('Error al obtener deudas:', e);
+        res.status(500).json({ error: 'Error al obtener deudas' }); 
     }
 });
 
-// ACTUALIZAR DEUDA (PUT)
+// --- CREAR DEUDA (CON ALERTA INSTANTÁNEA) ---
+router.post('/', async (req, res) => {
+    const { bank_name, description, amount, due_date, frequency = 'mensual' } = req.body;
+    
+    if (!bank_name || !description || !amount || !due_date) {
+        return res.status(400).json({ error: 'Banco, descripción, monto y fecha de vencimiento son obligatorios' });
+    }
+
+    try {
+        // 1. Insertar la deuda con estado inicial 'pending'
+        const result = await pool.query(
+            `INSERT INTO debts (user_id, bank_name, description, amount, due_date, frequency, status) 
+             VALUES ($1, $2, $3, $4, $5, $6, 'pending') 
+             RETURNING *`,
+            [req.user.id, bank_name, description, amount, due_date, frequency]
+        );
+        
+        const nuevaDeuda = result.rows[0];
+
+        // 2. Lógica para verificar si la deuda nace VENCIDA
+        const fechaVencimiento = new Date(due_date);
+        const hoy = new Date();
+        // Normalizamos horas para comparar solo fechas
+        fechaVencimiento.setHours(0,0,0,0);
+        hoy.setHours(0,0,0,0);
+
+        if (fechaVencimiento <= hoy) {
+            console.log(`🔔 Deuda vencida detectada al crearla. Disparando alerta...`);
+            
+            // A. Actualizar el estado en la BD a 'overdue'
+            await pool.query("UPDATE debts SET status = 'overdue' WHERE id = $1", [nuevaDeuda.id]);
+            
+            // B. Enviar WhatsApp AL INSTANTE
+            enviarResumenVencidas(req.user.id); 
+        }
+
+        res.status(201).json(nuevaDeuda);
+
+    } catch (e) {
+        console.error('Error al crear deuda:', e);
+        res.status(500).json({ error: e.message || 'No se pudo crear la deuda' });
+    }
+});
+
+// --- ACTUALIZAR DEUDA ---
 router.put('/:id', async (req, res) => {
     const { id } = req.params;
-    const { bank_name, description, amount, due_date } = req.body;
+    const { bank_name, description, amount, due_date, frequency, status, paid_amount } = req.body;
     try {
-        const result = await pool.query(
-            `UPDATE debts SET bank_name = $1, description = $2, amount = $3, due_date = $4 
-             WHERE id = $5 AND user_id = $6 RETURNING *`,
-            [bank_name, description, amount, due_date, id, req.user.id]
-        );
-        if (result.rows.length === 0) return res.status(404).json({ error: 'Deuda no encontrada' });
-        res.json(result.rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+        const query = `
+            UPDATE debts
+            SET bank_name = COALESCE($1, bank_name),
+                description = COALESCE($2, description),
+                amount = COALESCE($3, amount),
+                due_date = COALESCE($4, due_date),
+                frequency = COALESCE($5, frequency),
+                status = COALESCE($6, status),
+                paid_amount = COALESCE($7, paid_amount)
+            WHERE id = $8 AND user_id = $9
+            RETURNING *
+        `;
+        const { rows } = await pool.query(query, [
+            bank_name, description, amount, due_date, frequency, status, paid_amount, id, req.user.id
+        ]);
+
+        if (!rows.length) {
+            return res.status(404).json({ error: 'Deuda no encontrada' });
+        }
+
+        return res.json(rows[0]);
+    } catch (error) {
+        console.error('Error al actualizar deuda', error);
+        return res.status(500).json({ error: 'No se pudo actualizar la deuda' });
+    }
 });
 
-// ELIMINAR DEUDA (DELETE)
+// --- ELIMINAR DEUDA ---
 router.delete('/:id', async (req, res) => {
-    const { id } = req.params;
     try {
-        const result = await pool.query(
-            'DELETE FROM debts WHERE id = $1 AND user_id = $2 RETURNING *',
-            [id, req.user.id]
-        );
-        if (result.rows.length === 0) return res.status(404).json({ error: 'Deuda no encontrada' });
-        res.json({ message: 'Deuda eliminada' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+        const { rowCount } = await pool.query('DELETE FROM debts WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
+        if (!rowCount) {
+            return res.status(404).json({ error: 'Deuda no encontrada' });
+        }
+        return res.status(204).send();
+    } catch (error) {
+        console.error('Error al eliminar deuda', error);
+        return res.status(500).json({ error: 'No se pudo eliminar la deuda' });
+    }
 });
 
-module.exports = router;
+module.exports = router; // <-- ¡Esto debe estar al final!

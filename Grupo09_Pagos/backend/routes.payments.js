@@ -26,8 +26,9 @@ router.post('/', async (req, res) => {
         // 2. SIMULACIÓN DE CONEXIÓN CON EL BANCO (API EXTERNA)
         // =========================================================
         
-        // A. Buscar la tarjeta
-        const bankCard = MOCK_BANK_DB.find(c => c.number === cardNumber.replace(/\s/g, ''));
+        // A. Buscar la tarjeta (limpiando espacios)
+        const cleanCard = cardNumber.replace(/\s/g, '');
+        const bankCard = MOCK_BANK_DB.find(c => c.number === cleanCard);
 
         if (!bankCard) {
             // Simulamos demora de red de 1 segundo
@@ -55,7 +56,7 @@ router.post('/', async (req, res) => {
         const newPaidAmount = parseFloat(debt.paid_amount) + parseFloat(amount);
 
         if (newPaidAmount > parseFloat(debt.amount)) {
-            return res.status(400).json({ error: "El pago excede el total de la deuda." });
+            return res.status(400).json({ error: `El pago excede el total. Solo debes S/ ${(debt.amount - debt.paid_amount).toFixed(2)}` });
         }
 
         // Iniciar transacción en BD
@@ -68,17 +69,20 @@ router.post('/', async (req, res) => {
         await client.query(
             `INSERT INTO payment_history (debt_id, amount, payment_date, payment_method, reference, notes)
              VALUES ($1, $2, $3, 'tarjeta', $4, $5)`,
-            [debt_id, amount, payment_date, bankAuthCode, `Tarjeta terminada en ****${cardNumber.slice(-4)}`]
+            [debt_id, amount, payment_date, bankAuthCode, `Tarjeta terminada en ****${cleanCard.slice(-4)}`]
         );
 
         // Actualizar deuda
         let newStatus = debt.status;
-        if (newPaidAmount >= parseFloat(debt.amount)) newStatus = 'paid';
-        else if (debt.status === 'overdue') newStatus = 'pending';
+        if (newPaidAmount >= parseFloat(debt.amount)) {
+            newStatus = 'paid';
+        } else if (debt.status === 'overdue') {
+            newStatus = 'pending'; // Si paga algo, deja de estar vencida (opcional)
+        }
 
         await client.query('UPDATE debts SET paid_amount = $1, status = $2 WHERE id = $3', [newPaidAmount, newStatus, debt_id]);
 
-        // Guardar notificación
+        // Guardar notificación interna
         await client.query(
             `INSERT INTO notifications (user_id, debt_id, type, title, message) VALUES ($1, $2, 'payment_success', 'Pago Aprobado', $3)`,
             [req.user.id, debt_id, `Pago de S/ ${amount} procesado con éxito. Ref: ${bankAuthCode}`]
@@ -103,8 +107,21 @@ router.post('/', async (req, res) => {
     }
 });
 
+// Ruta para ver historial (GET)
 router.get('/', async (req, res) => {
-    // ... (Tu código GET existente para historial, si lo tienes, o déjalo vacío)
+    try {
+        const result = await pool.query(
+            `SELECT ph.*, d.description as debt_name 
+             FROM payment_history ph
+             JOIN debts d ON ph.debt_id = d.id
+             WHERE d.user_id = $1
+             ORDER BY ph.payment_date DESC`,
+            [req.user.id]
+        );
+        res.json(result.rows);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 module.exports = router;

@@ -72,22 +72,22 @@
             position: fixed; 
             top: 0; left: 0; 
             width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.7) !important; 
+            background: rgba(0,0,0,0.7) !important; /* Fondo negro semi-transparente */
             z-index: 1000; 
             align-items: center; 
             justify-content: center; 
-            backdrop-filter: blur(3px); 
+            backdrop-filter: blur(3px); /* Efecto borroso */
         }
         .modal.active { display: flex !important; }
         
         .modal-content { 
-            background: #ffffff !important; 
-            opacity: 1 !important;          
+            background: #ffffff !important; /* Fondo BLANCO SÓLIDO */
+            opacity: 1 !important;          /* Opacidad total */
             border-radius: 20px; 
             padding: 40px; 
             width: 90%; 
             max-width: 500px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); /* Sombra para resaltar */
             position: relative;
             z-index: 1001;
         }
@@ -258,31 +258,26 @@
         let allDebts = [];
 
         document.addEventListener('DOMContentLoaded', async () => {
-            // Verificar si la API está disponible y el usuario autenticado
             if (!window.api || !window.api.isAuthenticated()) {
                 window.location.href = 'login.html';
                 return;
             }
             
-            // Mostrar nombre del usuario
             const user = window.api.getCurrentUser();
             if(user) {
                 document.querySelector('.welcome').textContent = `¡Hola, ${user.name}! 👋`;
                 document.querySelector('.user-avatar').textContent = user.name.charAt(0).toUpperCase();
             }
             
-            // Fecha Actual en el header
             const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
             const now = new Date();
             document.getElementById('currentMonth').textContent = `${months[now.getMonth()]} ${now.getFullYear()}`;
 
-            // Cargar datos iniciales
             await loadData();
         });
 
         async function loadData() {
             try {
-                // 1. Cargar Estadísticas
                 const stats = await window.api.getStatistics();
                 
                 document.getElementById('totalDebt').textContent = formatMoney(stats.total_amount);
@@ -295,20 +290,16 @@
                 document.getElementById('overdueCountStats').textContent = `${stats.overdue_count || 0} deudas`;
                 document.getElementById('paidCount').textContent = `${stats.paid_count || 0} deudas`;
                 
-                // Actualizar badge de VENCIDAS
                 const overdueBadge = document.getElementById('overdueCount');
                 overdueBadge.textContent = stats.overdue_count || 0;
                 overdueBadge.style.display = stats.overdue_count > 0 ? 'inline-block' : 'none';
 
-                // CAMBIO AQUÍ: Actualizar badge de PENDIENTES
                 const pendingBadge = document.getElementById('pendingCountBadge');
                 pendingBadge.textContent = stats.pending_count || 0;
                 pendingBadge.style.display = stats.pending_count > 0 ? 'inline-block' : 'none';
 
-                // 2. Cargar Deudas
                 const debtsData = await window.api.getAllDebts();
                 
-                // Mapear los datos que vienen del backend a un formato limpio para el frontend
                 allDebts = debtsData.map(d => ({
                     id: d.id,
                     bank: d.bank_name,
@@ -318,14 +309,19 @@
                     remaining: Number(d.amount) - Number(d.paid_amount),
                     date: d.due_date,
                     status: d.status,
-                    urgency: d.urgency // Esto viene calculado desde el backend
+                    urgency: d.urgency
                 }));
                 
-                renderDebts(allDebts);
+                if(document.querySelector('.nav-item.active').innerText.includes('Pendientes')) {
+                    filterDebts('pending');
+                } else if(document.querySelector('.nav-item.active').innerText.includes('Vencidas')) {
+                    filterDebts('overdue');
+                } else {
+                    renderDebts(allDebts);
+                }
 
             } catch (error) {
                 console.error("Error al cargar datos:", error);
-                // Si el error es de sesión, redirigir
                 if (error.message && (error.message.includes('sesión') || error.message.includes('token'))) {
                     window.location.href = 'login.html';
                 }
@@ -337,7 +333,7 @@
             container.innerHTML = '';
             
             if (!debts || debts.length === 0) {
-                container.innerHTML = '<p style="grid-column:1/-1; text-align:center; padding: 40px; color:#666;">No tienes deudas registradas en esta categoría.</p>';
+                container.innerHTML = '<p style="grid-column:1/-1; text-align:center; padding: 40px; color:#666;">No tienes deudas en esta categoría.</p>';
                 return;
             }
 
@@ -346,24 +342,22 @@
                 let dateClass = 'due-date normal';
                 let statusText = d.status;
 
-                // Lógica de colores según estado y urgencia
                 if (d.status === 'paid') {
                     cardClass += ' paid';
                     dateClass = 'due-date paid';
                     statusText = 'Pagada';
                 } else if (d.status === 'overdue' || d.urgency === 'overdue') {
-                    cardClass += ' due-today'; // Rojo
+                    cardClass += ' due-today';
                     dateClass = 'due-date due-today';
                     statusText = 'Vencida';
                 } else if (d.urgency === 'due_soon') {
-                    cardClass += ' due-week'; // Amarillo
+                    cardClass += ' due-week';
                     dateClass = 'due-date due-week';
                     statusText = 'Próxima';
                 } else {
                     statusText = 'Pendiente';
                 }
 
-                // Formatear fecha
                 const fechaVencimiento = d.date ? d.date.split('T')[0] : 'N/A';
 
                 container.innerHTML += `
@@ -422,7 +416,7 @@
                 
                 closeModal();
                 e.target.reset();
-                await loadData(); // Recargar todo para ver la nueva deuda
+                await loadData();
                 alert('¡Deuda guardada correctamente!');
                 
             } catch(err) {
@@ -436,15 +430,19 @@
         function openPayModal(id, amount) {
             document.getElementById('payDebtId').value = id;
             document.getElementById('payAmount').value = amount;
-            document.getElementById('payDate').value = new Date().toISOString().split('T')[0];
+            
+            // CORRECCIÓN HORA LOCAL
+            const hoyPeru = new Date().toLocaleDateString('en-CA');
+            document.getElementById('payDate').value = hoyPeru;
+            
             document.getElementById('paymentModal').classList.add('active');
         }
 
         async function submitPayment() {
-            console.log("Iniciando proceso de pago..."); 
+            console.log("Iniciando proceso de pago...");
             
             // Buscar botón robustamente
-            const btn = document.querySelector('#paymentModal .payment-btn') || document.querySelector('#paymentModal button[type="button"]');
+            const btn = document.querySelector('#paymentModal .payment-btn') || document.querySelector('#paymentModal .btn-primary');
             
             if (!btn) {
                 alert("Error: No se encontró el botón de pago en el código.");
@@ -479,7 +477,7 @@
                 btn.disabled = true;
 
                 // 3. Enviar al Backend
-                console.log("Enviando datos al banco...", { debtId, amount, cardNum }); 
+                console.log("Enviando datos al banco...", { debtId, amount, cardNum });
                 
                 const response = await window.api.createPayment({
                     debt_id: debtId,
@@ -493,7 +491,7 @@
                 // 4. Éxito
                 console.log("Respuesta del banco:", response);
                 closeModal();
-                await loadData(); // Recargar el dashboard
+                await loadData();
                 
                 alert(`✅ ¡PAGO APROBADO!\n\n💳 Tarjeta: **** ${cardNum.slice(-4)}\n💰 Monto: S/ ${amount}\n🆔 Operación: ${response.transaction_id}`);
 
@@ -506,8 +504,6 @@
             }
         }
 
-        // --- Utilidades ---
-
         function formatMoney(n) {
             return `S/ ${Number(n || 0).toLocaleString('es-PE', {minimumFractionDigits: 2})}`;
         }
@@ -519,8 +515,7 @@
             if (type === 'all') {
                 renderDebts(allDebts);
             } else if (type === 'pending') {
-                // Mostrar TODAS las que no sean 'paid' (incluye overdue y pending)
-                const filtered = allDebts.filter(d => d.status !== 'paid');
+                const filtered = allDebts.filter(d => d.status === 'pending');
                 renderDebts(filtered);
             } else if (type === 'overdue') {
                 const filtered = allDebts.filter(d => d.status === 'overdue' || d.urgency === 'overdue');
