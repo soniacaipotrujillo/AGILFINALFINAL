@@ -16,8 +16,8 @@ const resetCodes = new Map();
 // --- CONFIGURACIÓN DE CORREO (CORREGIDA PARA RENDER) ---
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // false para puerto 587
+  port: 465,        // CAMBIO 1: Usamos puerto SSL
+  secure: true,     // CAMBIO 2: true para puerto 465
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -25,7 +25,7 @@ const transporter = nodemailer.createTransport({
   tls: {
     rejectUnauthorized: false
   },
-  // 🔴 FIX CRÍTICO: Forzamos IPv4 para evitar timeouts en Render
+  // Mantenemos family: 4 por si acaso, aunque en 465 suele dar igual
   family: 4 
 });
 
