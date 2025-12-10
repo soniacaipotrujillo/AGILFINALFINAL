@@ -6,12 +6,19 @@ const router = express.Router();
 
 // --- 1. Inicialización SEGURA de Twilio ---
 let twilioClient = null;
+let twilioFrom = process.env.TWILIO_WHATSAPP_NUMBER;
 
 if (process.env.TWILIO_SID && process.env.TWILIO_TOKEN) {
     // Si las credenciales están, inicializamos el cliente
     twilioClient = twilio(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
 } else {
     console.error('❌ ERROR CRÍTICO: Variables de entorno de Twilio (SID/TOKEN) no encontradas. Las notificaciones de WhatsApp están deshabilitadas.');
+}
+
+if (!twilioFrom) {
+    console.error('❌ ERROR CRÍTICO: TWILIO_WHATSAPP_NUMBER no está configurado. Las alertas no se enviarán.');
+} else if (!twilioFrom.startsWith('whatsapp:')) {
+    twilioFrom = `whatsapp:${twilioFrom}`;
 }
 // ------------------------------------------
 
@@ -31,6 +38,11 @@ async function enviarMensajeWhatsApp(user, cuerpo) {
         return;
     }
 
+    if (!twilioFrom) {
+        console.error('❌ No se puede enviar WhatsApp: falta TWILIO_WHATSAPP_NUMBER.');
+        return;
+    }
+
     if (!user || !user.phone || !user.phone.startsWith('+') || user.phone.length < 10) {
         console.log(`⚠️ Usuario ${user?.id ?? 'desconocido'} no tiene teléfono válido. No se envió alerta.`);
         return;
@@ -39,7 +51,7 @@ async function enviarMensajeWhatsApp(user, cuerpo) {
     const targetPhone = `whatsapp:${user.phone}`;
 
     await twilioClient.messages.create({
-        from: process.env.TWILIO_WHATSAPP_NUMBER,
+        from: twilioFrom,
         to: targetPhone,
         body: cuerpo,
     });
@@ -152,4 +164,4 @@ router.get('/health', (_req, res) => {
     res.json({ ready, message });
 });
 
-module.exports = { router, enviarResumenVencidas };
+module.exports = { router, enviarResumenVencidas, enviarResumenCompleto };
