@@ -10,122 +10,106 @@ const {
 
 const router = express.Router();
 
-// Almacenamiento temporal de códigos (se borra si reinicias el servidor)
+// Almacenamiento temporal de códigos
 const resetCodes = new Map(); 
 
-// --- CONFIGURACIÓN DE NODEMAILER (MODIFICADA PARA RENDER) ---
-// Cambiamos 'service: gmail' por configuración explícita del host y puerto 587
+// --- CONFIGURACIÓN DE CORREO (CORREGIDA PARA RENDER) ---
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 587,
-  secure: false, // false para puerto 587 (usa STARTTLS), true para 465
+  secure: false, // false para puerto 587
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
   tls: {
-    rejectUnauthorized: false // Ayuda a evitar errores de certificados en algunos servidores
-  }
+    rejectUnauthorized: false
+  },
+  // 🔴 FIX CRÍTICO: Forzamos IPv4 para evitar timeouts en Render
+  family: 4 
 });
 
 // --- RUTAS ---
 
 router.post('/register', async (req, res) => {
   const { name, email, password, phone } = req.body;
-
-  if (!name || !email || !password) {
-    return res.status(400).json({ error: 'Nombre, email y contraseña son obligatorios' });
-  }
+  if (!name || !email || !password) return res.status(400).json({ error: 'Faltan datos' });
 
   try {
     const existing = await findUserByEmail(email);
-    if (existing) {
-      return res.status(400).json({ error: 'Ya existe un usuario con ese email' });
-    }
+    if (existing) return res.status(400).json({ error: 'Email ya registrado' });
 
     const user = await createUser({ name, email, password, phone });
     const token = generateToken(user);
-
     return res.status(201).json({ token, user });
   } catch (error) {
-    console.error('Error registrando usuario', error);
-    return res.status(500).json({ error: 'No se pudo registrar el usuario' });
+    console.error('Error registro:', error);
+    return res.status(500).json({ error: 'Error al registrar' });
   }
 });
 
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email y contraseña son obligatorios' });
-  }
+  if (!email || !password) return res.status(400).json({ error: 'Faltan credenciales' });
 
   try {
     const user = await findUserByEmail(email);
     if (!user || !verifyPassword(password, user.password_hash)) {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
-
     const token = generateToken(user);
     const { password_hash, ...safeUser } = user;
-
     return res.json({ token, user: safeUser });
   } catch (error) {
-    console.error('Error en login', error);
-    return res.status(500).json({ error: 'No se pudo iniciar sesión' });
+    console.error('Error login:', error);
+    return res.status(500).json({ error: 'Error al iniciar sesión' });
   }
 });
 
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
-  if (!email) {
-    return res.status(400).json({ error: 'Email es requerido' });
-  }
+  if (!email) return res.status(400).json({ error: 'Email es requerido' });
 
   try {
     const user = await findUserByEmail(email);
-    if (!user) {
-      return res.status(404).json({ error: 'Usuario no encontrado' });
-    }
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
-    // Generar código de 6 dígitos
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutos
+    const expiresAt = Date.now() + 10 * 60 * 1000;
     resetCodes.set(email, { code, expiresAt });
 
-    console.log(`[DEBUG] Enviando código a ${email}...`);
+    // Mensaje de log modificado para saber que estamos en la nueva versión
+    console.log(`[DEBUG v2-IPv4] Enviando código a ${email}...`);
 
-    // Enviar el correo real
     await transporter.sendMail({
       from: `"Soporte Gestión Ágil" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: '🔐 Código de Recuperación de Contraseña',
+      subject: '🔐 Código de Recuperación',
       html: `
         <div style="font-family: sans-serif; padding: 20px; color: #333;">
           <h2 style="color: #667eea;">Recuperación de Contraseña</h2>
           <p>Hola <b>${user.name}</b>,</p>
-          <p>Has solicitado restablecer tu contraseña. Usa el siguiente código:</p>
+          <p>Tu código de verificación es:</p>
           <div style="background: #f3f4f6; padding: 15px; border-radius: 10px; text-align: center; margin: 20px 0;">
             <span style="font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #333;">${code}</span>
           </div>
-          <p style="font-size: 12px; color: #666;">Este código expira en 10 minutos. Si no fuiste tú, ignora este mensaje.</p>
+          <p style="font-size: 12px; color: #666;">Expira en 10 minutos.</p>
         </div>
       `,
     });
 
-    return res.json({ message: 'Código de recuperación enviado a tu correo.' });
+    return res.json({ message: 'Código enviado correctamente' });
 
   } catch (error) {
-    console.error('Error enviando correo de recuperación:', error);
-    return res.status(500).json({ error: 'No se pudo enviar el correo. Intenta más tarde.' });
+    console.error('❌ Error enviando correo:', error);
+    // Devolvemos el error específico para verlo en el frontend si es necesario
+    return res.status(500).json({ error: 'Error de conexión con el servidor de correo' });
   }
 });
 
 router.post('/reset-password', async (req, res) => {
   const { email, code, newPassword } = req.body;
-  if (!email || !code || !newPassword) {
-    return res.status(400).json({ error: 'Todos los campos son obligatorios' });
-  }
+  if (!email || !code || !newPassword) return res.status(400).json({ error: 'Faltan datos' });
 
   const stored = resetCodes.get(email);
   if (!stored || stored.code !== code || stored.expiresAt < Date.now()) {
@@ -134,22 +118,17 @@ router.post('/reset-password', async (req, res) => {
 
   try {
     const user = await findUserByEmail(email);
-    if (!user) {
-      return res.status(404).json({ error: 'Usuario no encontrado' });
-    }
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
     const passwordHash = hashPassword(newPassword);
-    
-    // Acceso directo a la pool para el update
     const { pool } = require('./db');
     await pool.query('UPDATE users SET password_hash = $1 WHERE email = $2', [passwordHash, email]);
 
-    resetCodes.delete(email); // Borramos el código usado
-
-    return res.json({ message: 'Contraseña actualizada correctamente' });
+    resetCodes.delete(email);
+    return res.json({ message: 'Contraseña actualizada' });
   } catch (error) {
-    console.error('Error actualizando contraseña', error);
-    return res.status(500).json({ error: 'No se pudo actualizar la contraseña' });
+    console.error('Error reset:', error);
+    return res.status(500).json({ error: 'Error al actualizar' });
   }
 });
 

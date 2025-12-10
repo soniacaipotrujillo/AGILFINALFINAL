@@ -18,7 +18,11 @@ try {
 const app = express();
 
 // Middlewares
-app.use(cors());
+app.use(cors({
+    origin: 'https://gestor-deudas-frontend.onrender.com', 
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 // --- 2. Importación y Uso de Rutas (Asegurando la consistencia de nombres) ---
