@@ -1,5 +1,4 @@
-const API_URL = 'https://agilfinalfinal.vercel.app/api';
-
+const API_URL = 'https://agilfinalfinal.onrender.com/api';
 class DebtAPI {
     constructor() {
         this.token = localStorage.getItem('token');
