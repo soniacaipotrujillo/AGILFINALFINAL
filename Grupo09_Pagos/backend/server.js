@@ -66,13 +66,13 @@ if (iniciarTareasProgramadas) {
 
 const port = process.env.PORT || 3000;
 
-// IMPORTANTE: Agregamos '0.0.0.0' como segundo parámetro
+
 app.listen(port, '0.0.0.0', async () => {
-    console.log(`🚀 Servidor arrancando en el puerto ${port}`);
+    console.log(`🚀 Servidor escuchando en puerto ${port}`);
     try {
         await pool.query('SELECT 1');
-        console.log(`✅ Conexión a Base de Datos exitosa`);
+        console.log(`✅ Base de datos conectada`);
     } catch (err) {
-        console.error('❌ Error de conexión a BD (pero el servidor sigue activo):', err.message);
+        console.error('❌ Error de BD:', err);
     }
 });
