@@ -3,6 +3,9 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const { pool } = require('./db');
 
+// Cargar variables de entorno ANTES de importar módulos que las usen (cron/notifications)
+dotenv.config();
+
 // --- 1. Importación de Funciones de Cron ---
 let iniciarTareasProgramadas;
 try {
@@ -11,8 +14,6 @@ try {
 } catch (e) {
     console.warn('⚠️ No se iniciarán alertas diarias (cronJobs.js no cargado).');
 }
-
-dotenv.config();
 
 const app = express();
 
@@ -28,18 +29,19 @@ try {
     const authRoutes = require('./routes.auth');
     const debtsRoutes = require('./routes.debts'); // Nombre en plural
     const paymentRoutes = require('./routes.payments');
-    const notificationRoutes = require('./routes.notifications');
+    const notificationModule = require('./routes.notifications');
+    const notificationRoutes = notificationModule.router || notificationModule;
     const bankRoutes = require('./routes.banks');
     const statisticsRoutes = require('./routes.statistics');
 
     // Mapeo de rutas (usando 'debtsRoutes' en lugar de 'debtRoutes' para consistencia)
     app.use(`${API_PREFIX}/auth`, authRoutes);
-    app.use(`${API_PREFIX}/debts`, debtsRoutes); 
+    app.use(`${API_PREFIX}/debts`, debtsRoutes);
     app.use(`${API_PREFIX}/payments`, paymentRoutes);
     app.use(`${API_PREFIX}/notifications`, notificationRoutes);
     app.use(`${API_PREFIX}/banks`, bankRoutes);
     app.use(`${API_PREFIX}/statistics`, statisticsRoutes);
-    
+
 } catch (error) {
     console.error('❌ ERROR CRÍTICO al cargar una ruta:', error.message);
     console.error('Revise la sintaxis de sus archivos routes.*.js y asegúrese de que terminen con: module.exports = router;');

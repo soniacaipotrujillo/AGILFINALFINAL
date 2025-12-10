@@ -1,7 +1,7 @@
 const express = require('express');
 const { pool } = require('./db');
 const { authMiddleware } = require('./auth');
-const { enviarResumenVencidas } = require('./notifications'); // Módulo para enviar WhatsApp
+const { enviarResumenVencidas } = require('./routes.notifications'); // Módulo para enviar WhatsApp
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -11,31 +11,31 @@ router.get('/', async (req, res) => {
     try {
         // Esta consulta trae TODAS las deudas no pagadas (incluye futuras, vencidas, próximas)
         const query = `
-            SELECT *, 
+            SELECT *,
             (amount - paid_amount) as remaining_amount,
-            CASE 
+            CASE
                 WHEN status = 'paid' THEN 'normal'
                 WHEN status = 'overdue' THEN 'overdue'
                 WHEN due_date <= CURRENT_DATE + INTERVAL '7 days' THEN 'due_soon'
                 ELSE 'normal'
             END as urgency
-            FROM debts 
-            WHERE user_id = $1 
-            AND status != 'paid' 
+            FROM debts
+            WHERE user_id = $1
+            AND status != 'paid'
             ORDER BY due_date ASC`;
-            
+
         const { rows } = await pool.query(query, [req.user.id]);
         res.json(rows);
-    } catch (e) { 
+    } catch (e) {
         console.error('Error al obtener deudas:', e);
-        res.status(500).json({ error: 'Error al obtener deudas' }); 
+        res.status(500).json({ error: 'Error al obtener deudas' });
     }
 });
 
 // --- CREAR DEUDA (CON ALERTA INSTANTÁNEA) ---
 router.post('/', async (req, res) => {
     const { bank_name, description, amount, due_date, frequency = 'mensual' } = req.body;
-    
+
     if (!bank_name || !description || !amount || !due_date) {
         return res.status(400).json({ error: 'Banco, descripción, monto y fecha de vencimiento son obligatorios' });
     }
@@ -43,12 +43,12 @@ router.post('/', async (req, res) => {
     try {
         // 1. Insertar la deuda con estado inicial 'pending'
         const result = await pool.query(
-            `INSERT INTO debts (user_id, bank_name, description, amount, due_date, frequency, status) 
-             VALUES ($1, $2, $3, $4, $5, $6, 'pending') 
+            `INSERT INTO debts (user_id, bank_name, description, amount, due_date, frequency, status)
+             VALUES ($1, $2, $3, $4, $5, $6, 'pending')
              RETURNING *`,
             [req.user.id, bank_name, description, amount, due_date, frequency]
         );
-        
+
         const nuevaDeuda = result.rows[0];
 
         // 2. Lógica para verificar si la deuda nace VENCIDA
@@ -60,12 +60,12 @@ router.post('/', async (req, res) => {
 
         if (fechaVencimiento <= hoy) {
             console.log(`🔔 Deuda vencida detectada al crearla. Disparando alerta...`);
-            
+
             // A. Actualizar el estado en la BD a 'overdue'
             await pool.query("UPDATE debts SET status = 'overdue' WHERE id = $1", [nuevaDeuda.id]);
-            
+
             // B. Enviar WhatsApp AL INSTANTE
-            enviarResumenVencidas(req.user.id); 
+            await enviarResumenVencidas(req.user.id);
         }
 
         res.status(201).json(nuevaDeuda);
