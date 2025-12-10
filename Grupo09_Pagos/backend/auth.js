@@ -13,18 +13,22 @@ const TOKEN_TTL_SECONDS = (() => {
   return Number(envTtl) || 86400;
 })();
 
-// CORRECCIÓN: Acepta y guarda el campo PHONE
-async function createUser({ name, email, password, phone }) {
+function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString('hex');
   const hashed = crypto.scryptSync(password, salt, 64).toString('hex');
-  const passwordHash = `${salt}:${hashed}`;
+  return `${salt}:${hashed}`;
+}
+
+// CORRECCIÓN: Acepta y guarda el campo PHONE
+async function createUser({ name, email, password, phone }) {
+  const passwordHash = hashPassword(password);
   const query = `
     INSERT INTO users (name, email, password_hash, avatar, phone)
     VALUES ($1, $2, $3, $4, $5)
-    RETURNING id, name, email, avatar
+    RETURNING id, name, email, avatar, phone
   `;
   // Insertamos el phone en la consulta SQL
-  const { rows } = await pool.query(query, [name, email, passwordHash, name[0]?.toUpperCase() || 'U', phone]); 
+  const { rows } = await pool.query(query, [name, email, passwordHash, name[0]?.toUpperCase() || 'U', phone]);
   return rows[0];
 }
 
@@ -89,5 +93,6 @@ module.exports = {
   createUser,
   findUserByEmail,
   generateToken,
+  hashPassword,
   verifyPassword,
 };

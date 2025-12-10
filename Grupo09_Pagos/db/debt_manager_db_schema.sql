@@ -11,6 +11,7 @@ CREATE TABLE users (
     email VARCHAR(150) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     avatar VARCHAR(10) DEFAULT 'K',
+    phone VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -101,7 +102,7 @@ RETURNS TABLE (
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
+    SELECT
         COUNT(*)::BIGINT,
         COALESCE(SUM(amount), 0),
         COUNT(*) FILTER (WHERE status = 'pending')::BIGINT,
@@ -116,7 +117,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 4. DATOS INICIALES
-INSERT INTO banks (name, code) VALUES 
+INSERT INTO banks (name, code) VALUES
     ('BCP', 'BCP'), ('BBVA', 'BBVA'), ('Interbank', 'INTERBANK'),
     ('Scotiabank', 'SCOTIABANK'), ('Banco de la Nación', 'BN'),
     ('Banco Pichincha', 'PICHINCHA'), ('Banco Falabella', 'FALABELLA'),
@@ -139,7 +140,7 @@ RETURNS TABLE (
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
+    SELECT
         COUNT(*)::BIGINT as total_debts,
         COALESCE(SUM(amount), 0) as total_amount,
         COUNT(*) FILTER (WHERE status = 'pending')::BIGINT as pending_count,
