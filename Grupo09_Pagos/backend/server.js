@@ -3,6 +3,9 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const { pool } = require('./db');
 
+// Cargar variables de entorno ANTES de importar módulos que las usen (cron/notifications)
+dotenv.config();
+
 // --- 1. Importación de Funciones de Cron ---
 let iniciarTareasProgramadas;
 try {
@@ -11,8 +14,6 @@ try {
 } catch (e) {
     console.warn('⚠️ No se iniciarán alertas diarias (cronJobs.js no cargado).');
 }
-
-dotenv.config();
 
 const app = express();
 
