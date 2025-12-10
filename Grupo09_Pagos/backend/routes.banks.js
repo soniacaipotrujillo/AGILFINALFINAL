@@ -1,7 +1,9 @@
 const express = require('express');
 const { pool } = require('./db');
+const { authMiddleware } = require('./auth'); // Agregamos authMiddleware, aunque no es estrictamente necesario, es buena práctica si la ruta es protegida.
 
 const router = express.Router();
+router.use(authMiddleware); // Protegemos la ruta
 
 router.get('/', async (_req, res) => {
   try {
@@ -13,4 +15,4 @@ router.get('/', async (_req, res) => {
   }
 });
 
-module.exports = router;
+module.exports = router; // <-- ¡Aseguramos el export!

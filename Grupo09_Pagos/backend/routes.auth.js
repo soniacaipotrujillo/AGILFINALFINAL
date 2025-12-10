@@ -1,12 +1,14 @@
 const express = require('express');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
-const { createUser, findUserByEmail, generateToken, verifyPassword } = require('./auth');
+// Asegúrate de que tu auth.js pueda manejar el campo 'phone'
+const { createUser, findUserByEmail, generateToken, verifyPassword } = require('./auth'); 
 const { pool } = require('./db');
 
+// Creamos el router
 const router = express.Router();
 
-// Configura tu correo REAL aquí o usa ethereal.email para pruebas
+// Configura tu correo REAL aquí
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -15,28 +17,31 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// Helper para hashear (mismo que en auth.js)
+// Helper para hashear (necesario para el reset de password)
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString('hex');
   const hashed = crypto.scryptSync(password, salt, 64).toString('hex');
   return `${salt}:${hashed}`;
 }
 
-// --- REGISTRO ---
+// --- REGISTRO (CORREGIDO CON CAMPO PHONE) ---
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-    if (!name || !email || !password) return res.status(400).json({ error: 'Faltan datos' });
+    // AÑADIMOS 'phone' para recibirlo del frontend
+    const { name, email, password, phone } = req.body; 
+    
+    if (!name || !email || !password || !phone) return res.status(400).json({ error: 'Faltan datos obligatorios (nombre, email, teléfono o contraseña)' });
 
     const existing = await findUserByEmail(email);
     if (existing) return res.status(409).json({ error: 'Correo ya registrado' });
 
-    const user = await createUser({ name, email, password });
+    // PASAMOS EL TELÉFONO al createUser (debiste modificarlo antes)
+    const user = await createUser({ name, email, password, phone }); 
     const token = generateToken(user);
     res.status(201).json({ token, user });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Error en registro' });
+    res.status(500).json({ error: error.message || 'Error en registro' });
   }
 });
 
@@ -65,10 +70,8 @@ router.post('/forgot-password', async (req, res) => {
     const user = await findUserByEmail(email);
     if (!user) return res.json({ message: 'Código enviado' }); // Seguridad
 
-    // Código de 6 dígitos
     const code = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Guardar en BD (15 min validez)
     await pool.query(
       `UPDATE users SET reset_token = $1, reset_token_expires = NOW() + interval '15 minutes' WHERE id = $2`,
       [code, user.id]
@@ -115,4 +118,4 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
-module.exports = router;
+module.exports = router; // <-- ¡Esta línea es la clave y debe ser la última!

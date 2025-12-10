@@ -7,7 +7,6 @@ router.use(authMiddleware);
 
 router.get('/', async (req, res) => {
   try {
-    // CAMBIO: Ahora ejecutamos el cálculo directo aquí, sin llamar a la función externa
     const query = `
       SELECT 
         COUNT(*)::integer as total_debts,
