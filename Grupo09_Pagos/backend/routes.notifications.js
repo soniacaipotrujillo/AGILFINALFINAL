@@ -152,4 +152,4 @@ router.get('/health', (_req, res) => {
     res.json({ ready, message });
 });
 
-module.exports = { router, enviarResumenVencidas, enviarResumenCompleto };
+module.exports = { router, enviarResumenVencidas };
