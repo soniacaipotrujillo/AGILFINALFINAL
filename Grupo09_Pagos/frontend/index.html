@@ -66,28 +66,28 @@
         .payment-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: 500; cursor: pointer; color: white; transition: transform 0.2s; }
         .payment-btn.credit { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
         
-        /* MODALS CORREGIDOS */
+        /* MODALS */
         .modal { 
             display: none; 
             position: fixed; 
             top: 0; left: 0; 
             width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.7) !important; /* Fondo negro semi-transparente */
+            background: rgba(0,0,0,0.7) !important;
             z-index: 1000; 
             align-items: center; 
             justify-content: center; 
-            backdrop-filter: blur(3px); /* Efecto borroso */
+            backdrop-filter: blur(3px);
         }
         .modal.active { display: flex !important; }
         
         .modal-content { 
-            background: #ffffff !important; /* Fondo BLANCO SÓLIDO */
-            opacity: 1 !important;          /* Opacidad total */
+            background: #ffffff !important;
+            opacity: 1 !important;
             border-radius: 20px; 
             padding: 40px; 
             width: 90%; 
             max-width: 500px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3); /* Sombra para resaltar */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             position: relative;
             z-index: 1001;
         }
@@ -157,7 +157,7 @@
             </div>
             <form onsubmit="saveDebt(event)">
                 <div class="form-group">
-                    <label class="form-label">Banco</label>
+                    <label class="form-label">Banco / Entidad</label>
                     <select class="form-input" id="bankName" required>
                         <option value="BCP">BCP</option>
                         <option value="BBVA">BBVA</option>
@@ -169,25 +169,33 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Descripción</label>
-                    <input type="text" class="form-input" id="debtDescription" placeholder="Ej: Tarjeta de Crédito" required>
+                    <input type="text" class="form-input" id="debtDescription" placeholder="Ej: Préstamo Personal" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Monto Total (S/)</label>
-                    <input type="number" step="0.01" class="form-input" id="debtAmount" required>
+                    <label class="form-label">Monto de la Cuota (S/)</label>
+                    <input type="number" step="0.01" class="form-input" id="debtAmount" placeholder="Monto por mes" required>
                 </div>
+                
                 <div class="form-group">
-                    <label class="form-label">Fecha de Vencimiento</label>
-                    <input type="date" class="form-input" id="dueDate" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Frecuencia</label>
-                    <select class="form-input" id="paymentFrequency">
-                        <option value="mensual">Mensual</option>
-                        <option value="quincenal">Quincenal</option>
-                        <option value="unico">Único</option>
+                    <label class="form-label">Frecuencia de Pago</label>
+                    <select class="form-input" id="paymentFrequency" onchange="toggleInstallments()">
+                        <option value="unico">Pago Único (Una sola vez)</option>
+                        <option value="mensual">Mensual (Cada mes)</option>
+                        <option value="quincenal">Quincenal (Cada 15 días)</option>
                     </select>
                 </div>
-                <button type="submit" class="payment-btn credit">Guardar Deuda</button>
+
+                <div class="form-group" id="installmentsGroup" style="display: none;">
+                    <label class="form-label">¿Cuántas cuotas son?</label>
+                    <input type="number" class="form-input" id="installments" min="2" max="60" value="12" placeholder="Ej: 12 meses">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Fecha de Inicio (1ra Cuota)</label>
+                    <input type="date" class="form-input" id="dueDate" required>
+                </div>
+                
+                <button type="submit" class="payment-btn credit">Generar Cronograma</button>
             </form>
         </div>
     </div>
@@ -397,27 +405,48 @@
             });
         }
 
+        // --- LÓGICA DE REGISTRO DE DEUDAS Y CUOTAS ---
+        
+        function toggleInstallments() {
+            const freq = document.getElementById('paymentFrequency').value;
+            const group = document.getElementById('installmentsGroup');
+            if (freq === 'unico') {
+                group.style.display = 'none';
+            } else {
+                group.style.display = 'block';
+            }
+        }
+
         async function saveDebt(e) {
             e.preventDefault();
             const btn = e.target.querySelector('button');
             const originalText = btn.textContent;
             
             try {
-                btn.textContent = 'Guardando...';
+                btn.textContent = 'Generando...';
                 btn.disabled = true;
+
+                const frequency = document.getElementById('paymentFrequency').value;
+                let installments = 1;
+
+                if (frequency !== 'unico') {
+                    installments = parseInt(document.getElementById('installments').value) || 12;
+                }
 
                 await window.api.createDebt({
                     bank_name: document.getElementById('bankName').value,
                     description: document.getElementById('debtDescription').value,
                     amount: document.getElementById('debtAmount').value,
                     due_date: document.getElementById('dueDate').value,
-                    frequency: document.getElementById('paymentFrequency').value
+                    frequency: frequency,
+                    installments: installments
                 });
                 
                 closeModal();
                 e.target.reset();
+                toggleInstallments();
                 await loadData();
-                alert('¡Deuda guardada correctamente!');
+                alert(`¡Éxito! Se han generado ${installments} cuotas correctamente.`);
                 
             } catch(err) {
                 alert("Error al guardar: " + err.message);
@@ -427,11 +456,12 @@
             }
         }
 
+        // --- FIN LÓGICA DE REGISTRO ---
+
         function openPayModal(id, amount) {
             document.getElementById('payDebtId').value = id;
             document.getElementById('payAmount').value = amount;
             
-            // CORRECCIÓN HORA LOCAL
             const hoyPeru = new Date().toLocaleDateString('en-CA');
             document.getElementById('payDate').value = hoyPeru;
             
@@ -440,8 +470,6 @@
 
         async function submitPayment() {
             console.log("Iniciando proceso de pago...");
-            
-            // Buscar botón robustamente
             const btn = document.querySelector('#paymentModal .payment-btn') || document.querySelector('#paymentModal .btn-primary');
             
             if (!btn) {
@@ -452,17 +480,14 @@
             const originalText = btn.innerHTML;
 
             try {
-                // 1. Recoger datos
                 const debtId = document.getElementById('payDebtId').value;
                 const amount = document.getElementById('payAmount').value;
                 const date = document.getElementById('payDate').value;
                 
-                // Datos de tarjeta
                 const cardNum = document.getElementById('cardNumber').value;
                 const cardExp = document.getElementById('cardExp').value;
                 const cardCvv = document.getElementById('cardCvv').value;
 
-                // Validaciones
                 if(!amount || amount <= 0) {
                     alert("⚠️ Por favor ingresa un monto válido mayor a 0.");
                     return;
@@ -472,13 +497,9 @@
                     return;
                 }
 
-                // 2. Feedback visual
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
                 btn.disabled = true;
 
-                // 3. Enviar al Backend
-                console.log("Enviando datos al banco...", { debtId, amount, cardNum });
-                
                 const response = await window.api.createPayment({
                     debt_id: debtId,
                     amount: amount,
@@ -488,7 +509,6 @@
                     cardCvv: cardCvv
                 });
 
-                // 4. Éxito
                 console.log("Respuesta del banco:", response);
                 closeModal();
                 await loadData();

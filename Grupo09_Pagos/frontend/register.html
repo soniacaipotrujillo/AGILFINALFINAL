@@ -6,64 +6,183 @@
     <title>Registro - Gestor de Deudas</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }
-        .auth-card { background: white; border-radius: 20px; padding: 40px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); text-align: center; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; padding: 20px; box-sizing: border-box; }
+        
+        /* TARJETA PRINCIPAL */
+        .auth-card { 
+            background: white; 
+            border-radius: 20px; 
+            padding: 40px; 
+            width: 100%; 
+            max-width: 450px; /* Ancho inicial (solo formulario) */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); 
+            text-align: center; 
+            transition: max-width 0.5s ease-in-out; /* Animación suave al expandir */
+            overflow: hidden;
+        }
+
+        /* CLASE PARA EXPANDIR LA TARJETA */
+        .auth-card.expanded {
+            max-width: 900px;
+        }
+
+        .auth-container {
+            display: flex;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .form-column {
+            flex: 1;
+            min-width: 300px;
+            transition: all 0.3s;
+        }
+
+        /* Columna de WhatsApp (Oculta inicialmente) */
+        .info-column {
+            flex: 1;
+            min-width: 300px;
+            display: none; /* OCULTO POR DEFECTO */
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        /* Cuando activamos la vista de éxito */
+        .expanded .info-column {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Estilos generales */
         .icon-container { width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; font-size: 24px; }
+        .success-icon { background: #10b981; } /* Icono verde para éxito */
+        
         h2 { color: #333; margin: 0 0 10px; font-size: 24px; }
         p.subtitle { color: #666; font-size: 14px; margin-bottom: 20px; }
         .form-group { margin-bottom: 15px; text-align: left; }
         label { display: block; color: #333; font-size: 14px; font-weight: 500; margin-bottom: 8px; }
         input { width: 100%; padding: 12px 15px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 15px; box-sizing: border-box; color: #4a5568; }
         input:focus { outline: none; border-color: #667eea; }
+        
         .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; width: 100%; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        .btn-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        
         .register-link { margin-top: 20px; font-size: 14px; color: #666; }
         .register-link a { color: #667eea; text-decoration: none; font-weight: 600; }
         .error-message { background-color: #fee2e2; color: #dc2626; padding: 10px; border-radius: 6px; font-size: 14px; margin-bottom: 20px; display: none; }
+
+        .hidden { display: none !important; }
+
+        /* MODO RESPONSIVO */
+        @media (max-width: 850px) {
+            .auth-container { flex-direction: column; gap: 20px; }
+            .auth-card.expanded { max-width: 450px; } /* En móvil no expande a lo ancho, crece hacia abajo */
+            .info-column { width: 100%; }
+        }
     </style>
 </head>
 <body>
-    <div class="auth-card">
-        <div class="icon-container">
-            <i class="fas fa-user-plus"></i>
+    <div class="auth-card" id="mainCard">
+        
+        <div class="auth-container">
+            <div class="form-column">
+                
+                <div id="registerView">
+                    <div class="icon-container">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <h2>Crear Cuenta</h2>
+                    <p class="subtitle">Empieza a controlar tu dinero hoy</p>
+
+                    <div id="errorAlert" class="error-message"></div>
+
+                    <form id="registerForm">
+                        <div class="form-group">
+                            <label>Nombre Completo</label>
+                            <input type="text" id="name" placeholder="Tu nombre" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Correo Electrónico</label>
+                            <input type="email" id="email" placeholder="ejemplo@correo.com" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Celular (Para alertas WhatsApp)</label>
+                            <input type="tel" id="phone" placeholder="+51999999999" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Contraseña</label>
+                            <input type="password" id="password" placeholder="Mínimo 6 caracteres" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Confirmar Contraseña</label>
+                            <input type="password" id="confirmPassword" placeholder="Repite tu contraseña" required>
+                        </div>
+
+                        <button type="submit" class="btn-primary">Registrarme</button>
+                    </form>
+
+                    <div class="register-link">
+                        ¿Ya tienes cuenta? <a href="login.html">Inicia Sesión</a>
+                    </div>
+                </div>
+
+                <div id="successView" class="hidden">
+                    <div class="icon-container success-icon">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <h2 style="color: #10b981;">¡Cuenta Creada!</h2>
+                    <p class="subtitle" style="font-size: 16px;">
+                        Bienvenido, <span id="userNameDisplay" style="font-weight: bold;"></span>.
+                    </p>
+                    <p style="color: #555; margin-bottom: 30px; line-height: 1.5;">
+                        Para finalizar la configuración y recibir tus alertas, 
+                        por favor realiza el paso de vinculación de WhatsApp a la derecha.
+                    </p>
+
+                    <button onclick="window.location.href='index.html'" class="btn-primary btn-success">
+                        Ir al Dashboard <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+
+            </div>
+
+            <div class="info-column" id="whatsappColumn">
+                <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 16px; padding: 25px; text-align: left; color: #1e3a8a; height: 100%; display: flex; flex-direction: column; justify-content: center;">
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <i class="fab fa-whatsapp" style="color: #25D366; font-size: 40px;"></i>
+                    </div>
+                    <h3 style="margin: 0 0 10px 0; font-size: 18px; text-align: center;">Activar Notificaciones</h3>
+                    <p style="font-size: 14px; margin-bottom: 20px; text-align: center; color: #555;">
+                        Vincula tu celular con nuestro sistema de alertas.
+                    </p>
+                    
+                    <p style="margin: 0 0 5px 0; font-size: 13px; font-weight: 600;">1. Copia este código:</p>
+                    <div style="display: flex; gap: 8px; margin-bottom: 20px;">
+                        <input type="text" value="join yard-transportation" id="waCode" readonly 
+                            style="margin:0; background: white; border: 1px solid #bfdbfe; font-family: monospace; font-weight: bold; color: #333; cursor: text; text-align: center;">
+                        <button type="button" onclick="copiarCodigo()" title="Copiar código"
+                            style="width: 45px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+
+                    <p style="margin: 0 0 5px 0; font-size: 13px; font-weight: 600;">2. Envíalo al número:</p>
+                    <div style="background: white; padding: 8px; border-radius: 8px; border: 1px solid #bfdbfe; text-align: center; margin-bottom: 20px; font-weight: bold; color: #444;">
+                        +1 415 523 8886
+                    </div>
+
+                    <a href="https://wa.me/14155238886?text=join%20yard-transportation" target="_blank" 
+                       style="display: flex; align-items: center; justify-content: center; gap: 10px; background: #25D366; color: white; text-decoration: none; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 14px; transition: transform 0.2s; box-shadow: 0 4px 6px rgba(37, 211, 102, 0.2);">
+                       <i class="fab fa-whatsapp" style="font-size: 18px;"></i> Abrir WhatsApp y Enviar
+                    </a>
+                </div>
+            </div>
         </div>
-        <h2>Crear Cuenta</h2>
-        <p class="subtitle">Empieza a controlar tu dinero hoy</p>
 
-        <div id="errorAlert" class="error-message"></div>
-
-        <form id="registerForm">
-            <div class="form-group">
-                <label>Nombre Completo</label>
-                <input type="text" id="name" placeholder="Tu nombre" required>
-            </div>
-
-            <div class="form-group">
-                <label>Correo Electrónico</label>
-                <input type="email" id="email" placeholder="ejemplo@correo.com" required>
-            </div>
-
-            <div class="form-group">
-                <label>Celular (Para alertas WhatsApp)</label>
-                <input type="tel" id="phone" placeholder="+51999999999" required>
-                <small style="color:#666; font-size:12px;">Incluye el código de país (ej: +51)</small>
-            </div>
-
-            <div class="form-group">
-                <label>Contraseña</label>
-                <input type="password" id="password" placeholder="Mínimo 6 caracteres" required>
-            </div>
-
-            <div class="form-group">
-                <label>Confirmar Contraseña</label>
-                <input type="password" id="confirmPassword" placeholder="Repite tu contraseña" required>
-            </div>
-
-            <button type="submit" class="btn-primary">Registrarme</button>
-        </form>
-
-        <div class="register-link">
-            ¿Ya tienes cuenta? <a href="login.html">Inicia Sesión</a>
-        </div>
     </div>
 
     <script src="frontend_api_integration.js"></script>
@@ -75,37 +194,33 @@
             const errorDiv = document.getElementById('errorAlert');
             const originalText = btn.textContent;
             
-            // Obtenemos los valores (INCLUYENDO EL PHONE)
+            // Datos del formulario
             const name = document.getElementById('name').value;
             const email = document.getElementById('email').value;
-            const phone = document.getElementById('phone').value; // <--- AQUÍ ESTÁ
+            const phone = document.getElementById('phone').value;
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
 
             errorDiv.style.display = 'none';
 
-            // Validaciones básicas
+            // Validaciones
             if (password !== confirmPassword) {
                 errorDiv.textContent = 'Las contraseñas no coinciden';
                 errorDiv.style.display = 'block';
                 return;
             }
-
             if (password.length < 6) {
-                errorDiv.textContent = 'La contraseña debe tener al menos 6 caracteres';
+                errorDiv.textContent = 'Mínimo 6 caracteres';
                 errorDiv.style.display = 'block';
                 return;
             }
-
             if (!phone.startsWith('+')) {
-                errorDiv.textContent = 'El celular debe empezar con + (ej: +51...)';
+                errorDiv.textContent = 'El celular debe empezar con +';
                 errorDiv.style.display = 'block';
                 return;
             }
-
-            // Verificar si la API cargó correctamente
             if (!window.api) {
-                errorDiv.textContent = 'Error interno: La API no se ha cargado. Revisa la consola.';
+                errorDiv.textContent = 'Error: API no cargada.';
                 errorDiv.style.display = 'block';
                 return;
             }
@@ -114,20 +229,48 @@
                 btn.textContent = 'Creando cuenta...';
                 btn.disabled = true;
 
-                // Enviamos TODOS los datos al backend
+                // 1. REGISTRO EN BACKEND
                 await window.api.register(name, email, password, phone);
                 
-                // Si todo sale bien, vamos al dashboard
-                window.location.href = 'index.html';
+                // 2. ACTIVAR VISTA DE ÉXITO (Sin recargar)
+                mostrarExito(name);
                 
             } catch (error) {
-                console.error("Error en registro:", error);
-                errorDiv.textContent = error.message || 'Error al conectar con el servidor';
+                console.error("Error:", error);
+                errorDiv.textContent = error.message;
                 errorDiv.style.display = 'block';
                 btn.textContent = originalText;
                 btn.disabled = false;
             }
         });
+
+        function mostrarExito(nombreUsuario) {
+            // Animación de expansión
+            document.getElementById('mainCard').classList.add('expanded');
+            
+            // Ocultar formulario
+            document.getElementById('registerView').classList.add('hidden');
+            
+            // Mostrar vista de éxito
+            document.getElementById('userNameDisplay').textContent = nombreUsuario;
+            document.getElementById('successView').classList.remove('hidden');
+        }
+
+        function copiarCodigo() {
+            const copyText = document.getElementById("waCode");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value).then(() => {
+                const btn = document.querySelector('button[onclick="copiarCodigo()"]');
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i>';
+                btn.style.background = '#10b981';
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.style.background = '#3b82f6';
+                }, 2000);
+            });
+        }
     </script>
 </body>
 </html>
