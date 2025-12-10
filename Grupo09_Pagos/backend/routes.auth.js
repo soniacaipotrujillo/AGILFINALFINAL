@@ -13,13 +13,19 @@ const router = express.Router();
 // Almacenamiento temporal de códigos (se borra si reinicias el servidor)
 const resetCodes = new Map(); 
 
-// --- CONFIGURACIÓN DE NODEMAILER (GMAIL) ---
+// --- CONFIGURACIÓN DE NODEMAILER (MODIFICADA PARA RENDER) ---
+// Cambiamos 'service: gmail' por configuración explícita del host y puerto 587
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false, // false para puerto 587 (usa STARTTLS), true para 465
   auth: {
-    user: process.env.EMAIL_USER, // Lee gestionagil097@gmail.com del archivo .env
-    pass: process.env.EMAIL_PASS, // Lee tu contraseña de aplicación del archivo .env
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
+  tls: {
+    rejectUnauthorized: false // Ayuda a evitar errores de certificados en algunos servidores
+  }
 });
 
 // --- RUTAS ---
@@ -70,7 +76,6 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// --- RUTA MODIFICADA PARA ENVIAR CORREO REAL ---
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
   if (!email) {

@@ -65,11 +65,13 @@ if (iniciarTareasProgramadas) {
 }
 
 const port = process.env.PORT || 3000;
-app.listen(port, async () => {
+
+app.listen(port, '0.0.0.0', async () => {
     try {
         await pool.query('SELECT 1');
-        console.log(`Servidor escuchando en http://localhost:${port}`);
+        console.log(`✅ Servidor escuchando en el puerto ${port}`);
+        console.log(`✅ Conexión a Base de Datos exitosa`);
     } catch (err) {
-        console.error('No se pudo conectar a la base de datos', err);
+        console.error('❌ Error fatal: No se pudo conectar a la base de datos', err);
     }
 });
