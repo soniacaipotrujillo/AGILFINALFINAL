@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'https://agilfinalfinal.vercel.app/api';
 
 class DebtAPI {
     constructor() {
