@@ -13,21 +13,24 @@ const TOKEN_TTL_SECONDS = (() => {
   return Number(envTtl) || 86400;
 })();
 
-async function createUser({ name, email, password }) {
+// CORRECCIÓN: Acepta y guarda el campo PHONE
+async function createUser({ name, email, password, phone }) {
   const salt = crypto.randomBytes(16).toString('hex');
   const hashed = crypto.scryptSync(password, salt, 64).toString('hex');
   const passwordHash = `${salt}:${hashed}`;
   const query = `
-    INSERT INTO users (name, email, password_hash, avatar)
-    VALUES ($1, $2, $3, $4)
+    INSERT INTO users (name, email, password_hash, avatar, phone)
+    VALUES ($1, $2, $3, $4, $5)
     RETURNING id, name, email, avatar
   `;
-  const { rows } = await pool.query(query, [name, email, passwordHash, name[0]?.toUpperCase() || 'U']);
+  // Insertamos el phone en la consulta SQL
+  const { rows } = await pool.query(query, [name, email, passwordHash, name[0]?.toUpperCase() || 'U', phone]); 
   return rows[0];
 }
 
 async function findUserByEmail(email) {
-  const { rows } = await pool.query('SELECT id, name, email, password_hash, avatar FROM users WHERE email = $1', [email]);
+  // Aseguramos que el campo phone se seleccione para ser usado en notificaciones
+  const { rows } = await pool.query('SELECT id, name, email, password_hash, avatar, phone FROM users WHERE email = $1', [email]);
   return rows[0];
 }
 

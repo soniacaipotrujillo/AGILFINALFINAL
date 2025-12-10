@@ -23,12 +23,13 @@ class DebtAPI {
         return data;
     }
 
-    // --- AUTENTICACIÓN ---
-    async register(name, email, password) {
+    // --- AUTENTICACIÓN: ACEPTA PHONE ---
+    async register(name, email, password, phone) {
         const res = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: this.getHeaders(false),
-        body: JSON.stringify({ name, email, password, phone }) 
+            method: 'POST',
+            headers: this.getHeaders(false),
+            // Pasa el objeto completo, incluyendo phone
+            body: JSON.stringify({ name, email, password, phone }) 
         });
         const data = await this.handleResponse(res);
         this.saveSession(data);

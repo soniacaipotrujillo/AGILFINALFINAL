@@ -23,24 +23,20 @@ router.post('/', async (req, res) => {
         if (!cardNumber || !cardExp || !cardCvv) return res.status(400).json({ error: "Datos de tarjeta incompletos" });
 
         // =========================================================
-        // 2. SIMULACIÓN DE CONEXIÓN CON EL BANCO (API EXTERNA)
+        // 2. SIMULACIÓN DE CONEXIÓN CON EL BANCO
         // =========================================================
         
-        // A. Buscar la tarjeta (limpiando espacios)
         const cleanCard = cardNumber.replace(/\s/g, '');
         const bankCard = MOCK_BANK_DB.find(c => c.number === cleanCard);
 
         if (!bankCard) {
-            // Simulamos demora de red de 1 segundo
             await new Promise(r => setTimeout(r, 1000));
             return res.status(400).json({ error: "⛔ TRANSACCIÓN RECHAZADA: Tarjeta inválida o no existe." });
         }
 
-        // B. Verificar seguridad
         if (bankCard.cvv !== cardCvv) return res.status(400).json({ error: "⛔ RECHAZADO: Código de seguridad (CVV) incorrecto." });
         if (bankCard.status === 'blocked') return res.status(400).json({ error: "⛔ ALERTA DE SEGURIDAD: Tarjeta reportada como robada." });
 
-        // C. Verificar Fondos
         if (bankCard.balance < amount) {
             return res.status(400).json({ error: `⛔ FONDOS INSUFICIENTES. Tu saldo es S/ ${bankCard.balance}` });
         }
@@ -59,30 +55,25 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: `El pago excede el total. Solo debes S/ ${(debt.amount - debt.paid_amount).toFixed(2)}` });
         }
 
-        // Iniciar transacción en BD
         await client.query('BEGIN');
 
-        // Generar N° de Operación Bancaria Ficticia
         const bankAuthCode = `AUT-${Math.floor(100000 + Math.random() * 900000)}`;
 
-        // Guardar pago
         await client.query(
             `INSERT INTO payment_history (debt_id, amount, payment_date, payment_method, reference, notes)
              VALUES ($1, $2, $3, 'tarjeta', $4, $5)`,
             [debt_id, amount, payment_date, bankAuthCode, `Tarjeta terminada en ****${cleanCard.slice(-4)}`]
         );
 
-        // Actualizar deuda
         let newStatus = debt.status;
         if (newPaidAmount >= parseFloat(debt.amount)) {
             newStatus = 'paid';
         } else if (debt.status === 'overdue') {
-            newStatus = 'pending'; // Si paga algo, deja de estar vencida (opcional)
+            newStatus = 'pending';
         }
 
         await client.query('UPDATE debts SET paid_amount = $1, status = $2 WHERE id = $3', [newPaidAmount, newStatus, debt_id]);
 
-        // Guardar notificación interna
         await client.query(
             `INSERT INTO notifications (user_id, debt_id, type, title, message) VALUES ($1, $2, 'payment_success', 'Pago Aprobado', $3)`,
             [req.user.id, debt_id, `Pago de S/ ${amount} procesado con éxito. Ref: ${bankAuthCode}`]
@@ -90,7 +81,6 @@ router.post('/', async (req, res) => {
 
         await client.query('COMMIT');
 
-        // Responder al Frontend
         res.json({
             success: true,
             transaction_id: bankAuthCode,
@@ -124,4 +114,4 @@ router.get('/', async (req, res) => {
     }
 });
 
-module.exports = router;
+module.exports = router; // <-- ¡Esto debe estar al final!

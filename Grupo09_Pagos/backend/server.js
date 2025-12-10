@@ -4,7 +4,6 @@ const dotenv = require('dotenv');
 const { pool } = require('./db');
 
 // --- 1. Importación de Funciones de Cron ---
-// Usamos try/catch para que el servidor NO CAIGA si el archivo falta o falla.
 let iniciarTareasProgramadas;
 try {
     const cronModule = require('./cronJobs');
@@ -21,31 +20,31 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// --- 2. Importación y Uso de Rutas ---
+// --- 2. Importación y Uso de Rutas (Asegurando la consistencia de nombres) ---
 const API_PREFIX = '/api';
 
 try {
     // Estas son las variables que deben ser funciones/routers
     const authRoutes = require('./routes.auth');
-    const debtRoutes = require('./routes.debts');
+    const debtsRoutes = require('./routes.debts'); // Nombre en plural
     const paymentRoutes = require('./routes.payments');
     const notificationRoutes = require('./routes.notifications');
     const bankRoutes = require('./routes.banks');
     const statisticsRoutes = require('./routes.statistics');
 
-    // Si alguna de estas es undefined, el servidor crashea AQUÍ.
+    // Mapeo de rutas (usando 'debtsRoutes' en lugar de 'debtRoutes' para consistencia)
     app.use(`${API_PREFIX}/auth`, authRoutes);
-    app.use(`${API_PREFIX}/debts`, debtRoutes);
+    app.use(`${API_PREFIX}/debts`, debtsRoutes); 
     app.use(`${API_PREFIX}/payments`, paymentRoutes);
     app.use(`${API_PREFIX}/notifications`, notificationRoutes);
     app.use(`${API_PREFIX}/banks`, bankRoutes);
     app.use(`${API_PREFIX}/statistics`, statisticsRoutes);
     
-  } catch (error) {
-        console.error('❌ ERROR CRÍTICO al cargar una ruta:', error.message);
-        console.error('Revise la sintaxis de sus archivos routes.*.js y asegúrese de que terminen con: module.exports = router;');
-        process.exit(1); // Detenemos el servidor para forzar la corrección
-    }
+} catch (error) {
+    console.error('❌ ERROR CRÍTICO al cargar una ruta:', error.message);
+    console.error('Revise la sintaxis de sus archivos routes.*.js y asegúrese de que terminen con: module.exports = router;');
+    process.exit(1); // Detenemos el servidor para forzar la corrección
+}
 
 
 // Ruta de prueba

@@ -1,22 +1,36 @@
 const twilio = require('twilio');
 const { pool } = require('./db');
 
-// Configuración de Twilio
-const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
+// --- 1. Inicialización SEGURA de Twilio ---
+let twilioClient = null;
+
+if (process.env.TWILIO_SID && process.env.TWILIO_TOKEN) {
+    // Si las credenciales están, inicializamos el cliente
+    twilioClient = twilio(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
+} else {
+    console.error('❌ ERROR CRÍTICO: Variables de entorno de Twilio (SID/TOKEN) no encontradas. Las notificaciones de WhatsApp están deshabilitadas.');
+}
+// ------------------------------------------
 
 /**
  * Busca todas las deudas vencidas de un usuario y envía un solo mensaje de WhatsApp con el resumen.
  * @param {number} userId - ID del usuario a notificar.
  */
 async function enviarResumenVencidas(userId) {
+    // Si el cliente no se inicializó correctamente, salimos de la función
+    if (!twilioClient) {
+        return; 
+    }
+
     const dbClient = await pool.connect();
     try {
-        // 1. Obtener datos del usuario (nombre y teléfono)
+        // 1. Obtener datos del usuario
         const userRes = await dbClient.query('SELECT name, phone FROM users WHERE id = $1', [userId]);
         const user = userRes.rows[0];
 
-        if (!user || !user.phone || !user.phone.startsWith('whatsapp:+')) {
-            console.log(`⚠️ Usuario ${userId} no tiene teléfono WhatsApp válido. No se envió alerta.`);
+        // VALIDACIÓN CLAVE: El número debe tener el formato de WhatsApp de Twilio
+        if (!user || !user.phone || !user.phone.startsWith('+') || user.phone.length < 10) {
+            console.log(`⚠️ Usuario ${userId} no tiene teléfono válido. No se envió alerta.`);
             return;
         }
 
@@ -32,7 +46,7 @@ async function enviarResumenVencidas(userId) {
         const deudas = deudasRes.rows;
 
         if (deudas.length > 0) {
-            // 3. Construir mensaje (resumen de todas)
+            // 3. Construir mensaje
             let mensaje = `🚨 *ALERTA DE VENCIMIENTO* 🚨\n`;
             mensaje += `Hola ${user.name}, tienes ${deudas.length} pagos vencidos y pendientes:\n`;
 
@@ -46,10 +60,12 @@ async function enviarResumenVencidas(userId) {
 
             mensaje += `\n\n👉 _Ingresa a la web para regularizar tus cuentas._`;
 
-            // 4. Enviar WhatsApp
-            await client.messages.create({
+            // 4. Enviar WhatsApp (Aseguramos el prefijo 'whatsapp:')
+            const targetPhone = `whatsapp:${user.phone}`; 
+
+            await twilioClient.messages.create({
                 from: process.env.TWILIO_WHATSAPP_NUMBER,
-                to: user.phone,
+                to: targetPhone,
                 body: mensaje
             });
 
@@ -57,7 +73,7 @@ async function enviarResumenVencidas(userId) {
         }
 
     } catch (error) {
-        console.error('❌ Error enviando notificación instantánea:', error.message);
+        console.error('❌ Error enviando notificación:', error.message);
     } finally {
         dbClient.release();
     }

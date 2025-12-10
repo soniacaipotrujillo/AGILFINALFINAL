@@ -1,121 +1,92 @@
-const express = require('express');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
-// Asegúrate de que tu auth.js pueda manejar el campo 'phone'
-const { createUser, findUserByEmail, generateToken, verifyPassword } = require('./auth'); 
 const { pool } = require('./db');
 
-// Creamos el router
-const router = express.Router();
-
-// Configura tu correo REAL aquí
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: 'gestionagil097@gmail.com', // ⚠️ CAMBIA ESTO
-    pass: 'ejvb vfxf awvx pmea' // ⚠️ CAMBIA ESTO
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key';
+const TOKEN_TTL_SECONDS = (() => {
+  const envTtl = process.env.JWT_TTL || '86400';
+  if (envTtl.endsWith('d')) {
+    return Number(envTtl.replace('d', '')) * 86400;
   }
-});
+  if (envTtl.endsWith('h')) {
+    return Number(envTtl.replace('h', '')) * 3600;
+  }
+  return Number(envTtl) || 86400;
+})();
 
-// Helper para hashear (necesario para el reset de password)
-function hashPassword(password) {
+// CORRECCIÓN: Acepta y guarda el campo PHONE
+async function createUser({ name, email, password, phone }) {
   const salt = crypto.randomBytes(16).toString('hex');
   const hashed = crypto.scryptSync(password, salt, 64).toString('hex');
-  return `${salt}:${hashed}`;
+  const passwordHash = `${salt}:${hashed}`;
+  const query = `
+    INSERT INTO users (name, email, password_hash, avatar, phone)
+    VALUES ($1, $2, $3, $4, $5)
+    RETURNING id, name, email, avatar
+  `;
+  // Insertamos el phone en la consulta SQL
+  const { rows } = await pool.query(query, [name, email, passwordHash, name[0]?.toUpperCase() || 'U', phone]); 
+  return rows[0];
 }
 
-// --- REGISTRO (CORREGIDO CON CAMPO PHONE) ---
-router.post('/register', async (req, res) => {
-  try {
-    // AÑADIMOS 'phone' para recibirlo del frontend
-    const { name, email, password, phone } = req.body; 
-    
-    if (!name || !email || !password || !phone) return res.status(400).json({ error: 'Faltan datos obligatorios (nombre, email, teléfono o contraseña)' });
+async function findUserByEmail(email) {
+  const { rows } = await pool.query('SELECT id, name, email, password_hash, avatar, phone FROM users WHERE email = $1', [email]);
+  return rows[0];
+}
 
-    const existing = await findUserByEmail(email);
-    if (existing) return res.status(409).json({ error: 'Correo ya registrado' });
+function verifyPassword(password, storedHash) {
+  const [salt, key] = storedHash.split(':');
+  const hashed = crypto.scryptSync(password, salt, 64).toString('hex');
+  return crypto.timingSafeEqual(Buffer.from(key, 'hex'), Buffer.from(hashed, 'hex'));
+}
 
-    // PASAMOS EL TELÉFONO al createUser (debiste modificarlo antes)
-    const user = await createUser({ name, email, password, phone }); 
-    const token = generateToken(user);
-    res.status(201).json({ token, user });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: error.message || 'Error en registro' });
+function generateToken(user) {
+  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+  const payload = {
+    id: user.id,
+    email: user.email,
+    exp: Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS,
+  };
+  const payloadStr = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = crypto
+    .createHmac('sha256', JWT_SECRET)
+    .update(`${header}.${payloadStr}`)
+    .digest('base64url');
+  return `${header}.${payloadStr}.${signature}`;
+}
+
+function authMiddleware(req, res, next) {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ')
+    ? authHeader.slice('Bearer '.length)
+    : null;
+
+  if (!token) {
+    return res.status(401).json({ error: 'No se proporcionó token de autenticación' });
   }
-});
 
-// --- LOGIN ---
-router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const user = await findUserByEmail(email);
-    
-    if (!user || !verifyPassword(password, user.password_hash)) {
-      return res.status(401).json({ error: 'Credenciales inválidas' });
+    const [header, payload, signature] = token.split('.');
+    const expected = crypto.createHmac('sha256', JWT_SECRET).update(`${header}.${payload}`).digest('base64url');
+    if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
+      return res.status(401).json({ error: 'Token inválido' });
     }
 
-    const token = generateToken(user);
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email, avatar: user.avatar } });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error en login' });
+    const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) {
+      return res.status(401).json({ error: 'Token expirado' });
+    }
+
+    req.user = { id: decoded.id, email: decoded.email };
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Token inválido o expirado' });
   }
-});
+}
 
-// --- RECUPERACIÓN 1: PEDIR CÓDIGO ---
-router.post('/forgot-password', async (req, res) => {
-  const { email } = req.body;
-  try {
-    const user = await findUserByEmail(email);
-    if (!user) return res.json({ message: 'Código enviado' }); // Seguridad
-
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-
-    await pool.query(
-      `UPDATE users SET reset_token = $1, reset_token_expires = NOW() + interval '15 minutes' WHERE id = $2`,
-      [code, user.id]
-    );
-
-    // Enviar correo
-    await transporter.sendMail({
-      from: 'Debt Manager <no-reply@debtmanager.com>',
-      to: email,
-      subject: 'Tu código de recuperación',
-      text: `Tu código es: ${code}`
-    });
-
-    res.json({ message: 'Código enviado' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al enviar correo' });
-  }
-});
-
-// --- RECUPERACIÓN 2: CAMBIAR PASSWORD ---
-router.post('/reset-password', async (req, res) => {
-  const { email, code, newPassword } = req.body;
-  try {
-    const result = await pool.query(
-      `SELECT * FROM users WHERE email = $1 AND reset_token = $2 AND reset_token_expires > NOW()`,
-      [email, code]
-    );
-
-    if (result.rows.length === 0) return res.status(400).json({ error: 'Código inválido o expirado' });
-
-    const user = result.rows[0];
-    const newHash = hashPassword(newPassword);
-
-    await pool.query(
-      `UPDATE users SET password_hash = $1, reset_token = NULL, reset_token_expires = NULL WHERE id = $2`,
-      [newHash, user.id]
-    );
-
-    res.json({ message: 'Contraseña actualizada' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al cambiar contraseña' });
-  }
-});
-
-module.exports = router; // <-- ¡Esta línea es la clave y debe ser la última!
+module.exports = {
+  authMiddleware,
+  createUser,
+  findUserByEmail,
+  generateToken,
+  verifyPassword,
+};
