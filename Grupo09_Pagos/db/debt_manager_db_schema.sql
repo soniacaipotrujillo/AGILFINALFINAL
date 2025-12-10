@@ -17,7 +17,7 @@ CREATE TABLE users (
     email VARCHAR(150) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     avatar VARCHAR(10) DEFAULT 'K',
-    phone VARCHAR(25), -- Integrado desde el ALTER TABLE original
+    phone VARCHAR(25),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -32,7 +32,7 @@ CREATE TABLE banks (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabla de Deudas
+-- Tabla de Deudas (CORREGIDA CON COLUMNAS DE CUOTAS)
 CREATE TABLE debts (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -44,7 +44,12 @@ CREATE TABLE debts (
     due_date DATE NOT NULL,
     frequency VARCHAR(20) CHECK (frequency IN ('mensual', 'quincenal', 'semanal', 'unico')),
     status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'overdue', 'paid')),
-    last_notification_date DATE, -- Integrado desde el ALTER TABLE original
+    
+    -- Nuevas columnas para el control de cuotas integradas aquí:
+    total_installments INTEGER DEFAULT 1,
+    current_installment INTEGER DEFAULT 1,
+    
+    last_notification_date DATE,
     created_date DATE DEFAULT CURRENT_DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -91,10 +96,11 @@ $$ language 'plpgsql';
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_debts_updated_at BEFORE UPDATE ON debts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Función para marcar deudas como vencidas automáticamente
+-- Función para marcar deudas como vencidas automáticamente (revisando fecha actual)
 CREATE OR REPLACE FUNCTION check_overdue_debts()
 RETURNS TRIGGER AS $$
 BEGIN
+    -- Si la fecha de vencimiento ya pasó, es estado es pendiente y no se ha pagado completo -> overdue
     IF NEW.due_date < CURRENT_DATE AND NEW.status = 'pending' AND NEW.paid_amount < NEW.amount THEN
         NEW.status = 'overdue';
     END IF;
@@ -141,20 +147,3 @@ INSERT INTO banks (name, code) VALUES
     ('Scotiabank', 'SCOTIABANK'), ('Banco de la Nación', 'BN'),
     ('Banco Pichincha', 'PICHINCHA'), ('Banco Falabella', 'FALABELLA'),
     ('MiBanco', 'MIBANCO'), ('Otro', 'OTHER');
-
--- =========================================================
--- 5. UTILIDADES (Comandos útiles para mantenimiento)
--- =========================================================
-
-/* --- Consultar deudas vencidas ---
-   SELECT description, amount, due_date 
-   FROM debts 
-   WHERE status != 'paid' AND due_date <= CURRENT_DATE;
-
-   --- Borrar solo data de transacciones (Mantener usuarios y bancos) ---
-   TRUNCATE TABLE payment_history, notifications, debts RESTART IDENTITY;
-
-   --- Reinicio de Fábrica (Borra TODO excepto la estructura, ideal para demos) ---
-   TRUNCATE TABLE users, banks, debts, payment_history, notifications RESTART IDENTITY CASCADE;
-   -- Nota: Si ejecutas el truncate total, debes volver a correr el INSERT INTO banks
-*/
