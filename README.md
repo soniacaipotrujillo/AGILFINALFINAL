@@ -1,11 +1,11 @@
 # 💰 Gestor Inteligente de Deudas
 
-![Estado](https://img.shields.io/badge/Estado-En_Desarrollo-green)
-![Node.js](https://img.shields.io/badge/Node.js-v18+-green)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14+-blue)
-![Frontend](https://img.shields.io/badge/Frontend-HTML%2FCSS%2FJS-orange)
+![Estado](https://img.shields.io/badge/Estado-Funcional-brightgreen)
+![Node.js](https://img.shields.io/badge/Node.js-v18%2B-green)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14%2B-blue)
+![Twilio](https://img.shields.io/badge/Notificaciones-WhatsApp-25D366)
 
-Un sistema web completo para la gestión financiera personal, diseñado para organizar, visualizar y alertar sobre deudas y pagos mensuales de manera intuitiva.
+Un sistema web integral para la gestión financiera personal. Permite organizar deudas, generar cronogramas de pagos automáticos y recibir alertas en tiempo real vía WhatsApp sobre vencimientos próximos o pagos atrasados.
 
 ---
 
@@ -13,116 +13,100 @@ Un sistema web completo para la gestión financiera personal, diseñado para org
 
 <div align="center">
   <img src="./img/dashboard.png" alt="Dashboard Principal" width="800">
-  <p><em>Dashboard con resumen financiero y alertas visuales</em></p>
+  <p><em>Dashboard con resumen financiero, alertas visuales y gestión de cuotas</em></p>
 </div>
 
 ---
 
 ## 🚀 Características Principales
 
-1.  **Dashboard Informativo:** Visualización inmediata de deuda total, montos pendientes, vencidos y pagados.
-2.  **Sistema de Semáforo:**
-    * 🔴 **Rojo:** Deudas vencidas no pagadas.
-    * 🟡 **Amarillo:** Deudas que vencen en la semana actual.
-    * ⚪ **Normal:** Deudas al día o futuras.
-3.  **Gestión de Pagos:** Registro de pagos parciales o totales con diferentes métodos (Transferencia, Efectivo, Tarjeta).
-4.  **Cálculos Automáticos:** El sistema actualiza los saldos y estados de las deudas automáticamente mediante Triggers en la base de datos.
-5.  **Historial y Notificaciones:** (En desarrollo) Alertas sobre vencimientos del día sin necesidad de entrar a la configuración profunda.
+### 1. 📅 Generación de Cronogramas (Installments)
+El sistema ya no registra deudas aisladas. Ahora genera **calendarios de pago completos** al instante:
+* **Soporte de Frecuencias:** Mensual, Quincenal, Semanal o Pago Único.
+* **Proyección Futura:** Al registrar una deuda de 12 cuotas, el sistema crea automáticamente las 12 fechas futuras en la base de datos, permitiendo visualizar la carga financiera de los próximos meses.
+
+### 2. 🔔 Notificaciones Inteligentes (WhatsApp)
+Integración nativa con la API de **Twilio** para alertas directas al celular del usuario:
+* **Alerta Instantánea:** Si intentas crear una deuda con fecha pasada, recibes una alerta inmediata.
+* **Recordatorio Diario:** Un **Cron Job** se ejecuta todos los días a las 8:00 AM (Hora Perú) para enviar un resumen de deudas vencidas y pendientes del día.
+
+### 3. 💳 Pasarela de Pagos Simulada (Mock Bank)
+El sistema incluye un simulador de banco interno que valida:
+* Existencia de la tarjeta.
+* Saldo suficiente.
+* Coincidencia de CVV y Fecha de Vencimiento.
+* Estado de la tarjeta (Activa/Bloqueada).
+
+### 4. 🚦 Dashboard Semáforo
+Visualización inmediata del estado de las finanzas:
+* 🔴 **Rojo (Vencida):** Deudas cuya fecha límite ya pasó.
+* 🟡 **Amarillo (Próxima):** Vencen en los próximos 7 días.
+* ⚪ **Normal:** Deudas futuras.
 
 ---
 
 ## 🛠️ Stack Tecnológico
 
-* **Frontend:** HTML5, CSS3, JavaScript (ES6+), FontAwesome.
+* **Frontend:** HTML5, CSS3 (Diseño responsivo), JavaScript Vanilla (ES6+).
 * **Backend:** Node.js, Express.js.
-* **Base de Datos:** PostgreSQL con PL/pgSQL (Funciones y Triggers).
-* **Seguridad:** JWT (JSON Web Tokens) para autenticación y Bcrypt para encriptación de contraseñas.
+* **Base de Datos:** PostgreSQL (Uso intensivo de Triggers y Funciones PL/pgSQL).
+* **Servicios Externos:** Twilio API (WhatsApp).
+* **Seguridad:** JWT (JSON Web Tokens) y Bcrypt.
 
 ---
 
 ## ⚙️ Instalación y Configuración
 
-Sigue estos pasos para ejecutar el proyecto en tu entorno local.
-
 ### 1. Prerrequisitos
-* Tener instalado **Node.js** y **npm**.
-* Tener instalado y corriendo **PostgreSQL**.
+* Node.js y npm instalados.
+* PostgreSQL corriendo localmente.
+* Una cuenta de Twilio (opcional, para notificaciones).
 
-### 2. Configuración de la Base de Datos
-1.  Crea una base de datos llamada `debt_manager`.
-2.  Ejecuta el script SQL completo ubicado en `db/debt_manager_db_schema.sql`.
-    * *Nota: Es crucial ejecutar todo el script para que se creen las tablas, triggers y la función de estadísticas.*
+### 2. Base de Datos
+1.  Crea la base de datos: `CREATE DATABASE debt_manager;`
+2.  Ejecuta el script `db/debt_manager_db_schema.sql` para crear tablas y triggers.
 
+### 3. Backend
+Navega a la carpeta `backend` e instala dependencias:
 ```
-psql -U postgres -d debt_manager -f db/debt_manager_db_schema.sql
-3. Configuración del Backend
-Navega a la carpeta del servidor:
-
-
-
 cd Grupo09_Pagos/backend
-Instala las dependencias:
-
-
-
 npm install
-Crea un archivo .env en la carpeta backend con el siguiente contenido:
-
+Crea un archivo .env en la carpeta backend con la siguiente configuración:
 Fragmento de código
-
+# Base de Datos
 PGHOST=localhost
 PGPORT=5432
 PGDATABASE=debt_manager
 PGUSER=postgres
-PGPASSWORD=tu_contraseña_aqui
+PGPASSWORD=tu_contraseña
+
+# Servidor
 PORT=3000
 JWT_SECRET=tu_clave_secreta_segura
-Inicia el servidor:
+JWT_TTL=86400
 
-
-
-npm run dev
-Deberías ver: "Servidor escuchando en http://localhost:3000"
-
-4. Ejecución del Frontend
-Ve a la carpeta Grupo09_Pagos/frontend.
-
-Abre el archivo login.html o index.html en tu navegador.
-
-Recomendación: Usa una extensión como "Live Server" en VS Code para evitar problemas de CORS, aunque el código está adaptado para funcionar localmente.
-
-📂 Estructura del Proyecto
-
-Grupo09_Pagos/
-├── backend/                # API REST (Node.js/Express)
-│   ├── routes/             # Rutas de la API (Auth, Deudas, Pagos...)
-│   ├── db.js               # Conexión a PostgreSQL
-│   ├── auth.js             # Lógica de JWT y seguridad
-│   └── server.js           # Punto de entrada del servidor
+# Twilio (WhatsApp) - Opcional
+TWILIO_SID=tu_account_sid
+TWILIO_TOKEN=tu_auth_token
+TWILIO_WHATSAPP_NUMBER=+14155238886
+Inicia el servidor en modo desarrollo:Bashnpm run dev
+4. FrontendAbre el archivo frontend/login.html o index.html en tu navegador. El proyecto incluye integración API directa sin necesidad de un servidor de frontend complejo.📂 Estructura del ProyectoPlaintextGrupo09_Pagos/
+├── backend/
+│   ├── routes/
+│   │   ├── routes.debts.js      # Lógica de cronogramas y cuotas
+│   │   ├── routes.notifications.js # Integración con Twilio
+│   │   ├── routes.payments.js   # Simulador bancario
+│   │   └── ...
+│   ├── cronJobs.js              # Tareas programadas (8:00 AM)
+│   ├── db.js                    # Conexión PG
+│   └── server.js                # Entry point
 ├── db/
-│   └── debt_manager_db_schema.sql  # Script de creación de BD
-├── frontend/               # Interfaz de Usuario
-│   ├── index.html          # Dashboard principal
-│   ├── login.html          # Inicio de sesión
-│   ├── register.html       # Registro de usuarios
-│   └── frontend_api_integration.js # Conexión con el Backend
+│   └── debt_manager_db_schema.sql
+├── frontend/
+│   ├── index.html               # Dashboard principal
+│   ├── frontend_api_integration.js # Cliente HTTP
+│   └── ...
 └── README.md
-🔗 Endpoints de la API
-La API corre en http://localhost:3000/api y cuenta con los siguientes recursos principales:
-
-Auth: /auth/login, /auth/register
-
-Deudas: /debts (GET, POST, PUT, DELETE)
-
-Pagos: /payments (POST para registrar pago, GET para historial)
-
-Estadísticas: /statistics (Resumen financiero calculado en BD)
-
-Bancos: /banks (Lista de entidades financieras)
-
-📄 Licencia
-Este proyecto es de uso académico/personal para el Grupo 09.
-
-
-### Recomendación adicional:
-Para que las imágenes se vean, crea una carpeta llamada `img` dentro de tu proyecto, guarda ahí tus captu
+🔗 Endpoints ClaveMétodoEndpointDescripciónPOST/api/debtsCrea una deuda y genera automáticamente todas las cuotas futuras.GET/api/debtsLista todas las deudas ordenadas cronológicamente para el calendario.POST/api/paymentsProcesa un pago validando contra el "Banco Mock".POST/api/auth/registerRegistra usuario y su teléfono para alertas.📄 LicenciaEste proyecto es de uso académico para el Grupo 09.
+### Tip extra para VS Code:
+Si abres este archivo en VS Code y ves el código "crudo" (con los símbolos `#` y `*`), puedes presi
