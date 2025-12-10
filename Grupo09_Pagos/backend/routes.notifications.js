@@ -1,5 +1,8 @@
+const express = require('express');
 const twilio = require('twilio');
 const { pool } = require('./db');
+
+const router = express.Router();
 
 // --- 1. Inicialización SEGURA de Twilio ---
 let twilioClient = null;
@@ -79,4 +82,13 @@ async function enviarResumenVencidas(userId) {
     }
 }
 
-module.exports = { enviarResumenVencidas };
+// Endpoint de diagnóstico para verificar que el módulo de notificaciones está operativo
+router.get('/health', (_req, res) => {
+    const ready = Boolean(twilioClient);
+    const message = ready
+        ? 'Servicio de notificaciones operativo'
+        : 'Servicio de notificaciones degradado: Twilio no configurado';
+    res.json({ ready, message });
+});
+
+module.exports = { router, enviarResumenVencidas };

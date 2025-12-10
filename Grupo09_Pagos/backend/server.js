@@ -28,7 +28,8 @@ try {
     const authRoutes = require('./routes.auth');
     const debtsRoutes = require('./routes.debts'); // Nombre en plural
     const paymentRoutes = require('./routes.payments');
-    const notificationRoutes = require('./routes.notifications');
+    const notificationModule = require('./routes.notifications');
+    const notificationRoutes = notificationModule.router || notificationModule;
     const bankRoutes = require('./routes.banks');
     const statisticsRoutes = require('./routes.statistics');
 
