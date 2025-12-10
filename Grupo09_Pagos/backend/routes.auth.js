@@ -1,92 +1,114 @@
-const crypto = require('crypto');
-const { pool } = require('./db');
-
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key';
-const TOKEN_TTL_SECONDS = (() => {
-  const envTtl = process.env.JWT_TTL || '86400';
-  if (envTtl.endsWith('d')) {
-    return Number(envTtl.replace('d', '')) * 86400;
-  }
-  if (envTtl.endsWith('h')) {
-    return Number(envTtl.replace('h', '')) * 3600;
-  }
-  return Number(envTtl) || 86400;
-})();
-
-// CORRECCIÓN: Acepta y guarda el campo PHONE
-async function createUser({ name, email, password, phone }) {
-  const salt = crypto.randomBytes(16).toString('hex');
-  const hashed = crypto.scryptSync(password, salt, 64).toString('hex');
-  const passwordHash = `${salt}:${hashed}`;
-  const query = `
-    INSERT INTO users (name, email, password_hash, avatar, phone)
-    VALUES ($1, $2, $3, $4, $5)
-    RETURNING id, name, email, avatar
-  `;
-  // Insertamos el phone en la consulta SQL
-  const { rows } = await pool.query(query, [name, email, passwordHash, name[0]?.toUpperCase() || 'U', phone]); 
-  return rows[0];
-}
-
-async function findUserByEmail(email) {
-  const { rows } = await pool.query('SELECT id, name, email, password_hash, avatar, phone FROM users WHERE email = $1', [email]);
-  return rows[0];
-}
-
-function verifyPassword(password, storedHash) {
-  const [salt, key] = storedHash.split(':');
-  const hashed = crypto.scryptSync(password, salt, 64).toString('hex');
-  return crypto.timingSafeEqual(Buffer.from(key, 'hex'), Buffer.from(hashed, 'hex'));
-}
-
-function generateToken(user) {
-  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
-  const payload = {
-    id: user.id,
-    email: user.email,
-    exp: Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS,
-  };
-  const payloadStr = Buffer.from(JSON.stringify(payload)).toString('base64url');
-  const signature = crypto
-    .createHmac('sha256', JWT_SECRET)
-    .update(`${header}.${payloadStr}`)
-    .digest('base64url');
-  return `${header}.${payloadStr}.${signature}`;
-}
-
-function authMiddleware(req, res, next) {
-  const authHeader = req.headers.authorization || '';
-  const token = authHeader.startsWith('Bearer ')
-    ? authHeader.slice('Bearer '.length)
-    : null;
-
-  if (!token) {
-    return res.status(401).json({ error: 'No se proporcionó token de autenticación' });
-  }
-
-  try {
-    const [header, payload, signature] = token.split('.');
-    const expected = crypto.createHmac('sha256', JWT_SECRET).update(`${header}.${payload}`).digest('base64url');
-    if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
-      return res.status(401).json({ error: 'Token inválido' });
-    }
-
-    const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
-    if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) {
-      return res.status(401).json({ error: 'Token expirado' });
-    }
-
-    req.user = { id: decoded.id, email: decoded.email };
-    next();
-  } catch (err) {
-    return res.status(401).json({ error: 'Token inválido o expirado' });
-  }
-}
-
-module.exports = {
-  authMiddleware,
+const express = require('express');
+const {
   createUser,
   findUserByEmail,
   generateToken,
+  hashPassword,
   verifyPassword,
-};
+} = require('./auth');
+
+const router = express.Router();
+
+// Almacenamiento temporal de códigos de recuperación
+const resetCodes = new Map(); // email -> { code, expiresAt }
+
+router.post('/register', async (req, res) => {
+  const { name, email, password, phone } = req.body;
+
+  if (!name || !email || !password) {
+    return res.status(400).json({ error: 'Nombre, email y contraseña son obligatorios' });
+  }
+
+  try {
+    const existing = await findUserByEmail(email);
+    if (existing) {
+      return res.status(400).json({ error: 'Ya existe un usuario con ese email' });
+    }
+
+    const user = await createUser({ name, email, password, phone });
+    const token = generateToken(user);
+
+    return res.status(201).json({ token, user });
+  } catch (error) {
+    console.error('Error registrando usuario', error);
+    return res.status(500).json({ error: 'No se pudo registrar el usuario' });
+  }
+});
+
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email y contraseña son obligatorios' });
+  }
+
+  try {
+    const user = await findUserByEmail(email);
+    if (!user || !verifyPassword(password, user.password_hash)) {
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+
+    const token = generateToken(user);
+    const { password_hash, ...safeUser } = user;
+
+    return res.json({ token, user: safeUser });
+  } catch (error) {
+    console.error('Error en login', error);
+    return res.status(500).json({ error: 'No se pudo iniciar sesión' });
+  }
+});
+
+router.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'Email es requerido' });
+  }
+
+  try {
+    const user = await findUserByEmail(email);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutos
+    resetCodes.set(email, { code, expiresAt });
+
+    console.log(`Código de recuperación para ${email}: ${code}`);
+    return res.json({ message: 'Código de recuperación generado' });
+  } catch (error) {
+    console.error('Error generando código de recuperación', error);
+    return res.status(500).json({ error: 'No se pudo generar el código' });
+  }
+});
+
+router.post('/reset-password', async (req, res) => {
+  const { email, code, newPassword } = req.body;
+  if (!email || !code || !newPassword) {
+    return res.status(400).json({ error: 'Email, código y nueva contraseña son obligatorios' });
+  }
+
+  const stored = resetCodes.get(email);
+  if (!stored || stored.code !== code || stored.expiresAt < Date.now()) {
+    return res.status(400).json({ error: 'Código inválido o expirado' });
+  }
+
+  try {
+    const user = await findUserByEmail(email);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    const passwordHash = hashPassword(newPassword);
+    await require('./db').pool.query('UPDATE users SET password_hash = $1 WHERE email = $2', [passwordHash, email]);
+
+    resetCodes.delete(email);
+
+    return res.json({ message: 'Contraseña actualizada correctamente' });
+  } catch (error) {
+    console.error('Error actualizando contraseña', error);
+    return res.status(500).json({ error: 'No se pudo actualizar la contraseña' });
+  }
+});
+
+module.exports = router;
