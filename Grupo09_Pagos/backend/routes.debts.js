@@ -7,18 +7,10 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // ==========================================
-// 1. OBTENER DEUDAS (ORDENADAS PARA TU DISEÑO)
+// 1. OBTENER DEUDAS (ORDENADAS)
 // ==========================================
 router.get('/', async (req, res) => {
     try {
-        // La clave de tu diseño está en el "ORDER BY status DESC, due_date ASC"
-        // 1. status != 'paid': Solo traemos lo que debes (vencido o pendiente).
-        // 2. ORDER BY due_date ASC:
-        //    - Las Vencidas más viejas (ej: 2023) saldrán primero (arriba).
-        //    - Las Pendientes más cercanas (ej: mañana) saldrán justo después.
-        //    - Las Pendientes lejanas (ej: próximo mes) saldrán al final.
-        // Esto cumple EXACTAMENTE tu requisito de orden visual.
-        
         const query = `
             SELECT *,
             (amount - paid_amount) as remaining_amount,
@@ -33,16 +25,7 @@ router.get('/', async (req, res) => {
             AND status != 'paid' 
             ORDER BY due_date ASC
         `;
-
         const { rows } = await pool.query(query, [req.user.id]);
-        
-        // NOTA PARA EL FRONTEND:
-        // Como el backend te da la lista ordenada por fecha, el Frontend solo debe hacer esto:
-        // Recorrer la lista y preguntar: "¿Cambió el mes de esta deuda respecto a la anterior?" 
-        // -> Si sí: Dibuja una LÍNEA DE MES.
-        // Preguntar: "¿Cambió el status de 'overdue' a 'pending'?"
-        // -> Si sí: Dibuja una LÍNEA ROJA SEPARADORA.
-
         res.json(rows);
     } catch (e) {
         console.error('Error al obtener deudas:', e);
@@ -51,7 +34,7 @@ router.get('/', async (req, res) => {
 });
 
 // ==========================================
-// 2. CREAR DEUDA (GENERA TODO EL CALENDARIO DE GOLPE)
+// 2. CREAR DEUDA (CRONOGRAMA)
 // ==========================================
 router.post('/', async (req, res) => {
     const { bank_name, description, amount, due_date, frequency = 'mensual', installments = 1 } = req.body;
@@ -60,22 +43,16 @@ router.post('/', async (req, res) => {
         return res.status(400).json({ error: 'Faltan datos obligatorios' });
     }
 
-    // Usamos un cliente de la pool para poder hacer rollback si algo falla a la mitad
     const client = await pool.connect();
 
     try {
-        await client.query('BEGIN'); // Iniciamos transacción
+        await client.query('BEGIN');
 
         const totalCuotas = parseInt(installments) || 1;
         const listaDeudasCreadas = [];
         let primeraDeudaEsVencida = false;
 
-        console.log(`📝 Generando calendario de pagos: ${totalCuotas} cuotas (${frequency})`);
-
-        // BUCLE PARA CREAR TODAS LAS CUOTAS AHORA MISMO
         for (let i = 0; i < totalCuotas; i++) {
-            
-            // 1. Calcular fecha de esta cuota
             const fechaBase = new Date(due_date);
             const fechaCuota = new Date(fechaBase);
 
@@ -84,24 +61,20 @@ router.post('/', async (req, res) => {
             } else if (frequency.toLowerCase() === 'semanal') {
                 fechaCuota.setDate(fechaBase.getDate() + (i * 7));
             } else {
-                // Mensual por defecto
                 fechaCuota.setMonth(fechaBase.getMonth() + i);
             }
 
-            // 2. Determinar estado inicial (Solo la primera puede nacer vencida, las futuras son pending)
-            // (A menos que registres deudas de hace 5 meses, entonces todas nacerán vencidas, lo cual es correcto)
             let estadoInicial = 'pending';
             const hoy = new Date();
             hoy.setHours(0,0,0,0);
             const checkFecha = new Date(fechaCuota);
             checkFecha.setHours(0,0,0,0);
 
-            if (checkFecha <= hoy) {
+            if (checkFecha < hoy) {
                 estadoInicial = 'overdue';
                 primeraDeudaEsVencida = true;
             }
 
-            // 3. Insertar en BD
             const result = await client.query(
                 `INSERT INTO debts (
                     user_id, bank_name, description, amount, due_date, frequency, 
@@ -109,81 +82,92 @@ router.post('/', async (req, res) => {
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 RETURNING *`,
                 [
-                    req.user.id, 
-                    bank_name, 
-                    description, // Podrías poner `${description} (Cuota ${i+1})` si quieres diferenciarlas por nombre
-                    amount, 
-                    fechaCuota, 
-                    frequency, 
-                    estadoInicial,
-                    totalCuotas,
-                    i + 1 // Cuota actual (1, 2, 3...)
+                    req.user.id, bank_name, description, amount, fechaCuota, 
+                    frequency, estadoInicial, totalCuotas, i + 1
                 ]
             );
-
             listaDeudasCreadas.push(result.rows[0]);
         }
 
-        await client.query('COMMIT'); // Guardamos todo en la BD
+        await client.query('COMMIT');
         
-        console.log(`✅ ${totalCuotas} cuotas creadas exitosamente.`);
-
-        // Si se generaron deudas vencidas, enviamos alerta (una sola vez por el lote)
         if (primeraDeudaEsVencida) {
-            console.log(`🔔 Se detectaron cuotas vencidas en la creación. Enviando alerta...`);
-            // Ejecutamos esto fuera del hilo principal para no demorar la respuesta
-            enviarResumenVencidas(req.user.id).catch(err => console.error("Error enviando alerta:", err));
+            enviarResumenVencidas(req.user.id).catch(err => console.error("Error alerta:", err));
         }
 
-        // Devolvemos la lista completa para que el frontend las pinte todas de una vez
         res.status(201).json(listaDeudasCreadas);
 
     } catch (e) {
-        await client.query('ROLLBACK'); // Si falla algo, borramos todo lo que se intentó crear
-        console.error('Error al crear deudas:', e);
-        res.status(500).json({ error: e.message || 'No se pudo crear la deuda' });
+        await client.query('ROLLBACK');
+        console.error('Error al crear:', e);
+        res.status(500).json({ error: e.message });
     } finally {
         client.release();
     }
 });
 
 // ==========================================
-// 3. ACTUALIZAR DEUDA (SOLO PAGO, SIN GENERAR NADA)
+// 3. EDITAR DEUDA (LÓGICA INTELIGENTE DE ESTADO)
 // ==========================================
 router.put('/:id', async (req, res) => {
     const { id } = req.params;
-    const { bank_name, description, amount, due_date, frequency, status, paid_amount } = req.body;
+    const { bank_name, description, amount, due_date } = req.body;
 
+    const client = await pool.connect();
     try {
-        // Como ya creamos todas las cuotas al principio, aquí SOLO actualizamos el estado.
-        // Simple y limpio.
+        // 1. Obtener la deuda actual para comparar
+        const currentRes = await client.query('SELECT * FROM debts WHERE id = $1 AND user_id = $2', [id, req.user.id]);
+        if (currentRes.rows.length === 0) {
+            return res.status(404).json({ error: 'Deuda no encontrada' });
+        }
+        const currentDebt = currentRes.rows[0];
+
+        // 2. Determinar los nuevos valores (si no se envía uno, se usa el actual)
+        const newAmount = amount !== undefined ? parseFloat(amount) : parseFloat(currentDebt.amount);
+        const newDateVal = due_date !== undefined ? due_date : currentDebt.due_date;
+        const paidAmount = parseFloat(currentDebt.paid_amount);
+
+        // 3. Recalcular el ESTADO automáticamente
+        let newStatus = 'pending';
+        const hoy = new Date();
+        hoy.setHours(0,0,0,0);
         
-        const query = `
+        // Ajustamos la fecha para comparar correctamente (UTC vs Local issues fix)
+        const fechaVencimiento = new Date(newDateVal);
+        // Aseguramos que la fecha se interprete como inicio del día para la comparación
+        const checkFecha = new Date(fechaVencimiento.getFullYear(), fechaVencimiento.getMonth(), fechaVencimiento.getDate());
+
+        if (paidAmount >= newAmount) {
+            newStatus = 'paid';
+        } else if (checkFecha < hoy) {
+            newStatus = 'overdue'; // Si la fecha es anterior a hoy, es Vencida
+        } else {
+            newStatus = 'pending'; // Si es hoy o futuro, es Pendiente
+        }
+
+        // 4. Actualizar en la base de datos
+        const updateQuery = `
             UPDATE debts
             SET bank_name = COALESCE($1, bank_name),
                 description = COALESCE($2, description),
-                amount = COALESCE($3, amount),
-                due_date = COALESCE($4, due_date),
-                frequency = COALESCE($5, frequency),
-                status = COALESCE($6, status),
-                paid_amount = COALESCE($7, paid_amount)
-            WHERE id = $8 AND user_id = $9
+                amount = $3,
+                due_date = $4,
+                status = $5
+            WHERE id = $6 AND user_id = $7
             RETURNING *
         `;
         
-        const { rows } = await pool.query(query, [
-            bank_name, description, amount, due_date, frequency, status, paid_amount, id, req.user.id
+        const { rows } = await client.query(updateQuery, [
+            bank_name, description, newAmount, newDateVal, newStatus, id, req.user.id
         ]);
-
-        if (!rows.length) {
-            return res.status(404).json({ error: 'Deuda no encontrada' });
-        }
 
         return res.json(rows[0]);
 
     } catch (error) {
         console.error('Error al actualizar deuda', error);
         return res.status(500).json({ error: 'No se pudo actualizar la deuda' });
+    } finally {
+        client.release();
     }
 });
 

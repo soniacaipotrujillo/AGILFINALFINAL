@@ -1,4 +1,5 @@
 const API_URL = 'https://agilfinalfinal.onrender.com/api';
+
 class DebtAPI {
     constructor() {
         this.token = localStorage.getItem('token');
@@ -22,12 +23,11 @@ class DebtAPI {
         return data;
     }
 
-    // --- AUTENTICACIÓN: ACEPTA PHONE ---
+    // --- AUTENTICACIÓN ---
     async register(name, email, password, phone) {
         const res = await fetch(`${API_URL}/auth/register`, {
             method: 'POST',
             headers: this.getHeaders(false),
-            // Pasa el objeto completo, incluyendo phone
             body: JSON.stringify({ name, email, password, phone }) 
         });
         const data = await this.handleResponse(res);
@@ -75,6 +75,14 @@ class DebtAPI {
         return await this.handleResponse(res);
     }
 
+    // --- NUEVO: EDITAR DEUDA ---
+    async updateDebt(id, data) {
+        const res = await fetch(`${API_URL}/debts/${id}`, {
+            method: 'PUT', headers: this.getHeaders(), body: JSON.stringify(data)
+        });
+        return await this.handleResponse(res);
+    }
+
     // --- ESTADÍSTICAS ---
     async getStatistics() {
         const res = await fetch(`${API_URL}/statistics`, { headers: this.getHeaders() });
@@ -105,5 +113,4 @@ class DebtAPI {
     }
 }
 
-// Inicialización global única y segura
 window.api = new DebtAPI();
