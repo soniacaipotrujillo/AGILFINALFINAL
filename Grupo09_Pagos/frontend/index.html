@@ -347,22 +347,25 @@
 
             debts.forEach(d => {
                 let cardClass = 'debt-card';
-                let dateClass = 'due-date normal';
+                let dateClass = 'due-date';
                 let statusText = d.status;
 
+                // LÓGICA MODIFICADA PARA UNIFICAR COLORES
                 if (d.status === 'paid') {
+                    // Pagadas = VERDE
                     cardClass += ' paid';
-                    dateClass = 'due-date paid';
+                    dateClass += ' paid';
                     statusText = 'Pagada';
                 } else if (d.status === 'overdue' || d.urgency === 'overdue') {
+                    // Vencidas = ROJO
                     cardClass += ' due-today';
-                    dateClass = 'due-date due-today';
+                    dateClass += ' due-today';
                     statusText = 'Vencida';
-                } else if (d.urgency === 'due_soon') {
-                    cardClass += ' due-week';
-                    dateClass = 'due-date due-week';
-                    statusText = 'Próxima';
                 } else {
+                    // Todo lo demás (Pendientes y Próximas) = AMARILLO
+                    // Se elimina la distinción de "Próxima" y "Normal"
+                    cardClass += ' due-week';
+                    dateClass += ' due-week';
                     statusText = 'Pendiente';
                 }
 
